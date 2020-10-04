@@ -87,3 +87,12 @@ thead th {
     background-color: black;
     top: 0;
 }
+
+.list-group-item-action {
+    width: auto;
+    cursor: pointer;
+}
+
+.card {
+    z-index: 0;
+}

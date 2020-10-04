@@ -42,15 +42,14 @@ select productid, description from bourbon_desc order by description
 )
 
 
-tot_inv_spark_query = (
+tot_inv_query = (
 '''
 select 
-	productid,
-	CAST(insert_dt AS DATE) INSERT_DT,
+	CAST(insert_dt AS DATE) insert_dt,
 	SUM(quantity) quantity
 from bourbon
-where CAST(insert_dt AS DATE) >= DATE_ADD(CURDATE(), INTERVAL -12 DAY)
-GROUP BY productid, CAST(insert_dt AS DATE)
+where CAST(insert_dt AS DATE) >= '2020-03-01'
+GROUP BY CAST(insert_dt AS DATE)
 '''
 )
 

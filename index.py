@@ -78,7 +78,7 @@ app.layout = html.Div([
             dbc.Col([
                 html.Div(id='page-content')
             ], lg=12)
-        ], no_gutters=True)
+        ])
     ], fluid=True),
     html.Div([], id='overlay')
 ])

@@ -20,12 +20,10 @@ now = dt.datetime.utcnow()
 
 mydb = connect()
 
-print('Getting products...')
 df_products = pd.read_sql(dq.product_query, mydb)
 #This massages the dataframe into a list of tuples to parse into the options correctly
 product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['description'])]
 
-print('Getting stores...')
 df_stores = pd.read_sql(dq.stores_query, mydb)
 store_values = [(k,v) for k, v in zip(df_stores['storeid'], df_stores['store_addr'])]
 

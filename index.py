@@ -102,8 +102,9 @@ def display_page(pathname):
     [Input('menu-button', 'n_clicks'),
      Input('overlay', 'n_clicks'),
      Input('daily_inv_link', 'n_clicks'),
-     Input('anala_link', 'n_clicks')])
-def disp_menu(n1, n2, n3, n4):
+     Input('anala_link', 'n_clicks'),
+     Input('map_link', 'n_clicks')])
+def disp_menu(n1, n2, n3, n4, n5):
     ctx = dash.callback_context
 
     clicked = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -118,7 +119,7 @@ def disp_menu(n1, n2, n3, n4):
     ]
 
     if not ctx.triggered:
-        return None, None
+        return [None, None]
     elif clicked == 'menu-button':
         return turn_on
     elif clicked == 'overlay':
@@ -127,5 +128,5 @@ def disp_menu(n1, n2, n3, n4):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(host='0.0.0.0', port=8050)
 

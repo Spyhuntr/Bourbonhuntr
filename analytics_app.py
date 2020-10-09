@@ -221,7 +221,6 @@ def update_page(path, date, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_b
     [Input("line-chrt-btn-value", "children")],
 )
 def set_active_button(button_id):
-    print(button_id)
     if not button_id:
         return [True, False, False, False]
     else:

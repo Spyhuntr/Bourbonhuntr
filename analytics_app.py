@@ -75,7 +75,12 @@ layout = html.Div([
     dbc.Row([
         dbc.Col([
             dbc.InputGroup([
-                dcc.DatePickerSingle(id='dt-picker'),
+                dcc.DatePickerSingle(
+                    id='dt-picker', 
+                    date=now.date(),
+                    min_date_allowed=dt.date(2020, 3, 1),
+                    max_date_allowed=now.date()
+                ),
                 dbc.InputGroupAddon(
                     html.I(id='calendar-icon', className='fas fa-calendar-alt fa-md'), 
                     addon_type="append",
@@ -95,20 +100,23 @@ layout = html.Div([
 @app.callback(
     [Output(component_id='tot-inv', component_property='children'),
      Output(component_id='tot-spark', component_property='figure')],
-    Input(component_id='url', component_property='pathname')
+    [Input(component_id='url', component_property='pathname'),
+     Input(component_id='dt-picker', component_property='date')]
 )
-def update_page(path):
+def update_page(path, date):
 
     mydb = connect()
 
-    df = pd.read_sql(dq.tot_inv_query, mydb)
+    df = pd.read_sql(dq.tot_inv_query, mydb, params={date})
 
     df['quantity'] = df['quantity'].astype(int)
 
-    kpi_df = df[(df['insert_dt'] == now.date())]
+    date_param = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    
+    kpi_df = df[(df['insert_dt'] == date_param)]
     kpi_val = '{:,}'.format(kpi_df['quantity'].sum())
 
-    thirteendaysago = dt.datetime.today().date() - pd.to_timedelta("13day")
+    thirteendaysago = date_param - pd.to_timedelta("13day")
 
     tot_spark_df = df[(df['insert_dt'] >= thirteendaysago)]
     tot_spark_df = tot_spark_df.groupby(['insert_dt'], as_index=False)['quantity'].sum()
@@ -140,24 +148,30 @@ def update_page(path):
     [Output(component_id='inv-line-chrt', component_property='figure'),
      Output(component_id='line-chrt-btn-value', component_property='children')],
     [Input(component_id='url', component_property='pathname'),
+     Input(component_id='dt-picker', component_property='date'),
      Input(component_id='line-chrt-btn-1', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-2', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-3', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-4', component_property='n_clicks')]
 )
-def update_page(path, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
+def update_page(path, date, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
 
     ctx = dash.callback_context
 
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    if ctx.triggered[0]['prop_id'].split('.')[0] == 'dt-picker':
+        button_id = None
+    else:    
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
     mydb = connect()
 
-    df_line = pd.read_sql(dq.tot_inv_query, mydb)
+    df_line = pd.read_sql(dq.tot_inv_query, mydb, params={date})
 
-    onewk = dt.datetime.today().date() - pd.DateOffset(days=7)
-    onemonth = dt.datetime.today().date() - pd.DateOffset(months=1)
-    sixmonth = dt.datetime.today().date() - pd.DateOffset(months=6)
-    twelvemonth = dt.datetime.today().date() - pd.DateOffset(months=12)
+    date_param = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    onewk = date_param - pd.DateOffset(days=7)
+    onemonth = date_param - pd.DateOffset(months=1)
+    sixmonth = date_param - pd.DateOffset(months=6)
+    twelvemonth = date_param - pd.DateOffset(months=12)
 
     if button_id == 'line-chrt-btn-4':
         df_line = df_line[(df_line['insert_dt'] >= onewk)]
@@ -207,6 +221,7 @@ def update_page(path, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
     [Input("line-chrt-btn-value", "children")],
 )
 def set_active_button(button_id):
+    print(button_id)
     if not button_id:
         return [True, False, False, False]
     else:

@@ -121,7 +121,6 @@ def update_page(input_product, input_store):
     if not input_store:
         input_store = None
 
-    print('Updating figures...')
     df = pd.read_sql(dq.query, mydb, params=(now.date() , now.date()))
     
     df['insert_dt'] = df['insert_dt'].dt.date

@@ -2,6 +2,7 @@
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
+import dash_table
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import pandas as pd
@@ -18,8 +19,6 @@ mapbox_access_token = open(os.path.join(cwd_path, 'mapbox_token')).read()
 
 now = dt.datetime.utcnow()
 
-mydb = connect()
-
 quantity_map = html.Div(
     id='map-div',
     children=[ 
@@ -29,32 +28,40 @@ quantity_map = html.Div(
     ]
 )
 
+map_info_table = html.Div(
+    id='map-info-div',
+    children=[]
+)
+
 layout = html.Div([
-                quantity_map
-            ])
+            quantity_map,
+            html.Div([
+                map_info_table
+            ], id='map-menu', className="map-menu")
+        ])
 
 
 
 @app.callback(
     Output(component_id='quantity-map', component_property='figure'),
-    [Input(component_id='url', component_property='pathname')],
+    Input(component_id='url', component_property='pathname')
 )
-def update_page(path):
+def update_map_page(path):
 
-    df = pd.read_sql(dq.map_query, mydb)
+    mydb = connect()
+    df = pd.read_sql(dq.map_query, mydb, params=([now.date()]))
     
     map_fig = go.Figure(go.Scattermapbox(
         lat=df['latitude'], 
-        lon=df['longitude'], 
+        lon=df['longitude'],
         mode='markers',
+        text=df['store_addr'],
         marker={
             'size': 15,
             'opacity': 0.4
         },
         hovertemplate =
-            "<b>%{data.points.pointNumber}</b><br><br>" +
-            "longitude: %{lon}<br>" +
-            "latitude: %{lat}<br>"
+            "%{text}"
     ))
 
     map_fig.update_layout(
@@ -78,3 +85,43 @@ def update_page(path):
         })
 
     return map_fig
+
+
+
+
+@app.callback(
+    Output(component_id='map-info-div', component_property='children'),
+    Input(component_id='quantity-map', component_property='clickData')
+)
+def update_map_tbl(store):
+
+    mydb = connect()
+    df = pd.read_sql(dq.map_query, mydb, params=([now.date()]))
+
+    storeid = ' '
+    if store != None:
+        store = store['points'][0]['text']
+        storeid = store.split('-')
+
+    df_table = df[['storeid','description','quantity']]
+    df_table = df_table[(df_table['storeid'] == storeid[0])]
+    df_table.columns = ['Store','Product', 'Quantity']
+
+    hdr_list = []
+    for hdr in df_table.columns:
+        hdr_list.append(html.Th(hdr))
+    
+    table_header = [html.Thead(html.Tr(hdr_list))]
+
+    tbody = []
+    for data in df_table.values:
+        row_data=[]
+        for i in data:
+            row_data.append(html.Td(i))
+                
+        tbody.append(html.Tr(row_data))
+    table_body = [html.Tbody(tbody)]
+
+    dash_tbl = dbc.Table(table_header + table_body, bordered=True, striped=True)
+
+    return dash_tbl

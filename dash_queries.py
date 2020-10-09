@@ -49,6 +49,7 @@ select
 	SUM(quantity) quantity
 from bourbon
 where CAST(insert_dt AS DATE) >= '2020-03-01'
+and CAST(insert_dt AS DATE) <= %s
 GROUP BY CAST(insert_dt AS DATE)
 '''
 )
@@ -56,11 +57,20 @@ GROUP BY CAST(insert_dt AS DATE)
 
 map_query = (
 '''
-select 
+select
+bourbon_stores.storeid,
+Concat(bourbon.storeid, '-', store_addr_2, ' ', store_city) as store_addr,
+bourbon.productid,
+description,
 latitude,
 longitude,
 sum(quantity) as quantity
 from bourbon
-group by latitude, longitude
+inner join bourbon_desc
+on bourbon.productid = bourbon_desc.productid
+inner join bourbon_stores
+on bourbon.storeid = bourbon_stores.storeid
+where CAST(insert_dt AS DATE) = %s
+group by storeid, productid, latitude, longitude
 '''
 )

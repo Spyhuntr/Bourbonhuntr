@@ -10,6 +10,8 @@ import os
 from app import app
 import summary_app, analytics_app, map_app
 
+server = app.server
+
 cwd_path = os.path.dirname(__file__)
 today = dt.datetime.today().date()
 
@@ -128,5 +130,5 @@ def disp_menu(n1, n2, n3, n4, n5):
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=8050)
+    app.run_server()
 

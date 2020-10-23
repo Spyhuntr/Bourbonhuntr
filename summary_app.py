@@ -16,7 +16,14 @@ from app import app
 
 cwd_path = os.path.dirname(__file__)
 mapbox_access_token = open(os.path.join(cwd_path, 'mapbox_token')).read()
+
 now = dt.datetime.utcnow()
+today14hours = now.replace(hour=14, minute=0, second=0, microsecond=0)
+
+if now.time() < today14hours.time():
+    run_dt = now.date() - dt.timedelta(days=1)
+else:
+    run_dt = now.date()
 
 mydb = connect()
 
@@ -80,7 +87,7 @@ layout = html.Div([
         ], justify='center'),
         dbc.Row([
             dbc.Col([
-                html.H3("Welcome to the Bourbonhuntr! Below is the inventory for {}.".format(now.strftime('%m-%d-%Y')), className='text-primary')
+                html.H3("Welcome to the Bourbonhuntr! Below is the inventory for {}.".format(run_dt.strftime('%m-%d-%Y')), className='text-primary')
             ], lg=8, style={'text-align':'center'})
         ], no_gutters=True, justify='center'),
         dbc.Row([
@@ -119,7 +126,7 @@ def update_page(input_product, input_store):
     if not input_store:
         input_store = None
 
-    df = pd.read_sql(dq.query, mydb, params=(now.date() , now.date()))
+    df = pd.read_sql(dq.query, mydb, params=(run_dt,run_dt))
     
     df['insert_dt'] = df['insert_dt'].dt.date
 
@@ -168,18 +175,14 @@ def update_page(input_product, input_store):
 )
 def toggle_modal(url):
 
-    #The database should be done scraping around 14:15 UTC (10:15 EST)
-    db_done_time = dt.datetime.strptime("14:15:00", "%H:%M:%S")
-    db_done_time = now.replace(hour=db_done_time.time().hour, minute=db_done_time.time().minute, second=db_done_time.time().second, microsecond=0)
-
-    local_dt = db_done_time - dt.timedelta(hours=4, minutes=0)
+    db_done_time = now.replace(hour=15, minute=0, second=0, microsecond=0)
 
     info_div = html.Div([
         html.H4("Heads up!"),
-        html.P("The database has not finished updating for {}.  The database finishes around {} EST.".format(now.strftime('%m-%d-%Y'), local_dt.strftime("%I:%M %p")))
+        html.P("The database has not finished updating for {}.".format(now.strftime('%m-%d-%Y')))
     ], className='alert alert-dismissible alert-warning')
 
-    if now < db_done_time:
+    if now.time() < db_done_time.time():
         return info_div
 
 

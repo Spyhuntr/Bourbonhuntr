@@ -110,6 +110,7 @@ def disp_menu(n1, n2, n3, n4, n5):
     ctx = dash.callback_context
 
     clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
     turn_on = [
         {'margin-left':'0px'},
         {'display':'inline-block'}
@@ -119,16 +120,16 @@ def disp_menu(n1, n2, n3, n4, n5):
         {'margin-left':'-260px'},
         {'display':'none'}
     ]
-
-    if not ctx.triggered:
-        return [None, None]
-    elif clicked == 'menu-button':
+        
+    if clicked == 'menu-button':
         return turn_on
     elif clicked == 'overlay':
+        return turn_off
+    else:
         return turn_off
 
 
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
 

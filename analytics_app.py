@@ -197,14 +197,17 @@ def update_page(path, date, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_b
     )
 
     line_fig.update_layout(
-        xaxis=dict(
-            showline=True,
-            showgrid=False,
-            showticklabels=True,
-            linecolor='rgb(204, 204, 204)',
-            linewidth=2,
-            ticks='outside',
-        ),
+        xaxis={
+            'showline':True,
+            'showgrid':False,
+            'showticklabels':True,
+            'linecolor':'rgb(204, 204, 204)',
+            'linewidth':2,
+            'ticks':'outside'
+        },
+        yaxis={
+            'range':[15000,35000]
+        },
         height=200,
         showlegend=False,
         plot_bgcolor='white',

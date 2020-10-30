@@ -70,8 +70,8 @@ left_menu = html.Div([
 ], id='left-side-menu', className="left-side-menu")
 
 
-
-app.layout = html.Div([
+def serve_layout():
+    return html.Div([
     left_menu,
     dcc.Location(id='url', refresh=False),
     navbar,
@@ -84,6 +84,8 @@ app.layout = html.Div([
     ], fluid=True),
     html.Div([], id='overlay')
 ])
+
+app.layout = serve_layout
 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])

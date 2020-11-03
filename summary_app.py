@@ -10,12 +10,8 @@ import dash_queries as dq
 import datetime as dt
 import pytz
 import time
-import os
 
 from app import app
-
-cwd_path = os.path.dirname(__file__)
-mapbox_access_token = open(os.path.join(cwd_path, 'mapbox_token')).read()
 
 now = dt.datetime.utcnow()
 today14hours = now.replace(hour=14, minute=0, second=0, microsecond=0)

@@ -130,7 +130,7 @@ def update_page(path, date):
         }
     )
     
-    fig.update_yaxes(visible=False, range=[20000,30000])
+    fig.update_yaxes(visible=False)
     fig.update_traces(
         hovertemplate='%{y:,}'
     ),
@@ -204,9 +204,6 @@ def update_page(path, date, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_b
             'linecolor':'rgb(204, 204, 204)',
             'linewidth':2,
             'ticks':'outside'
-        },
-        yaxis={
-            'range':[15000,35000]
         },
         height=200,
         showlegend=False,

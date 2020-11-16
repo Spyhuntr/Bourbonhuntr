@@ -2,9 +2,7 @@ import dash
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
-import datetime as dt
-import time
+from dash.dependencies import Input, Output
 import os
 
 from app import app
@@ -13,8 +11,6 @@ import summary_app, analytics_app, map_app
 server = app.server
 
 cwd_path = os.path.dirname(__file__)
-today = dt.datetime.today().date()
-
 
 #begin layout section
 icon_set = dbc.Row(

@@ -9,11 +9,9 @@ from db_conn import connect
 import dash_queries as dq
 import datetime as dt
 import plotly.express as px
-import plotly.graph_objects as go
+import utils
 
 from app import app
-
-now = dt.datetime.utcnow()
 
 inv_total_widget = dbc.Card([
     dbc.CardBody([
@@ -77,9 +75,9 @@ layout = html.Div([
             dbc.InputGroup([
                 dcc.DatePickerSingle(
                     id='dt-picker', 
-                    date=now.date(),
+                    date=utils.get_run_dt(),
                     min_date_allowed=dt.date(2020, 3, 1),
-                    max_date_allowed=now.date()
+                    max_date_allowed=utils.get_run_dt()
                 ),
                 dbc.InputGroupAddon(
                     html.I(id='calendar-icon', className='fas fa-calendar-alt fa-md'), 
@@ -182,35 +180,23 @@ def update_page(path, date, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_b
     if button_id == 'line-chrt-btn-1':
         df_line = df_line[(df_line['insert_dt'] >= twelvemonth)]
 
-    line_fig = go.Figure()
-
-    line_fig.add_trace(
-        go.Scatter(
-            x=df_line['insert_dt'], 
-            y=df_line['quantity'], 
-            mode='lines',
-            line={'shape':'spline', 'smoothing': 1.3},
-            hovertemplate=
-            "<span class='card-header'><b>%{x}</b></span><br>" +
-            "Quantity: %{y:,.0}<br>"
-        )
-    )
+    line_fig = px.line(df_line, x='insert_dt', y='quantity', height=200,
+                       labels={
+                            'insert_dt':'Date',
+                            'quantity':'Quantity'
+                        },
+                        template='seaborn')
 
     line_fig.update_layout(
-        xaxis={
-            'showline':True,
-            'showgrid':False,
-            'showticklabels':True,
-            'linecolor':'rgb(204, 204, 204)',
-            'linewidth':2,
-            'ticks':'outside'
-        },
-        height=200,
-        showlegend=False,
-        plot_bgcolor='white',
-        margin={'t':0,'l':0,'b':0,'r':0}
+        margin={'l':0, 'r':0, 't':0, 'b':0},
+        xaxis={'showgrid': False, 'title': ''}
     )
 
+    line_fig.update_traces(
+        hovertemplate=
+            "<span class='card-header'><b>%{x}</b></span><br>" +
+            "Quantity: %{y:,.0}<br>"
+    )
 
     return line_fig, button_id
 

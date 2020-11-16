@@ -1,6 +1,6 @@
 
 
-@import url('https://fonts.googleapis.com/css2?family=Lato&family=Poppins:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
 
 body {
     margin: 0;
@@ -8,16 +8,17 @@ body {
 }
 
 #quantity-tbl-div {
-    box-shadow: 0 7px 14px 0 rgba(65,69,88,.1), 0 3px 6px 0 rgba(0,0,0,.07);
     overflow-y: auto;
-    max-height: 40rem;
+    max-height: 43rem;
+    box-shadow: 0 0 40px 0 rgba(0,0,0,.15);
+    border-radius: 10px;
 }
 
 thead th { 
     position: sticky; 
     top: 0;
-    border-bottom: 2px solid #dee2e6;
-    background-color: white;
+    background-color: #6c7ae0;
+    color: #FFF;
 }
 
 .left-side-menu {

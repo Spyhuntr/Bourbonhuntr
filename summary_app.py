@@ -3,23 +3,14 @@ import dash_html_components as html
 import dash_core_components as dcc
 import dash_table
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import pandas as pd
 from db_conn import connect
 import dash_queries as dq
 import datetime as dt
-import pytz
-import time
+import utils
 
 from app import app
-
-now = dt.datetime.utcnow()
-today14hours = now.replace(hour=14, minute=0, second=0, microsecond=0)
-
-if now.time() < today14hours.time():
-    run_dt = now.date() - dt.timedelta(days=1)
-else:
-    run_dt = now.date()
 
 mydb = connect()
 
@@ -47,7 +38,6 @@ form = html.Div(id='form-cntrl-div',
             children = [
                 dbc.Row([
                 dbc.Col([
-                    html.Label("Products", htmlFor="prod-select"),
                     dcc.Dropdown(
                         id="prod-select",
                         options=[{'label': i[1], 'value': i[0]} for i in product_values],
@@ -56,7 +46,6 @@ form = html.Div(id='form-cntrl-div',
                     )
                 ], lg=4),
                 dbc.Col([
-                    html.Label("Stores", htmlFor="store-select"),
                     dcc.Dropdown(
                         id="store-select",
                         options=[{'label': i[1], 'value': i[0]} for i in store_values],
@@ -83,7 +72,11 @@ layout = html.Div([
         ], justify='center'),
         dbc.Row([
             dbc.Col([
-                html.H3("Welcome to the Bourbonhuntr! Below is the inventory for {}.".format(run_dt.strftime('%m-%d-%Y')), className='text-primary')
+                html.H3( 
+                    id='summary-title',
+                    className='text-primary',
+                    children="Welcome to the Bourbonhuntr! Below is the inventory for {}.".format(utils.get_run_dt().strftime('%m-%d-%Y'))
+                )
             ], lg=8, style={'text-align':'center'})
         ], no_gutters=True, justify='center'),
         dbc.Row([
@@ -122,7 +115,7 @@ def update_page(input_product, input_store):
     if not input_store:
         input_store = None
 
-    df = pd.read_sql(dq.query, mydb, params=(run_dt,run_dt))
+    df = pd.read_sql(dq.query, mydb, params=(utils.get_run_dt(),utils.get_run_dt()))
     
     df['insert_dt'] = df['insert_dt'].dt.date
 
@@ -171,14 +164,14 @@ def update_page(input_product, input_store):
 )
 def toggle_modal(url):
 
-    db_done_time = now.replace(hour=15, minute=0, second=0, microsecond=0)
+    db_done_time = utils.now().replace(hour=16, minute=0, second=0, microsecond=0)
 
     info_div = html.Div([
         html.H4("Heads up!"),
-        html.P("The database has not finished updating for {}.".format(now.strftime('%m-%d-%Y')))
+        html.P("The database has not finished updating for {}.".format(utils.now().strftime('%m-%d-%Y')))
     ], className='alert alert-dismissible alert-warning')
 
-    if now.time() < db_done_time.time():
+    if utils.now().time() < db_done_time.time():
         return info_div
 
 

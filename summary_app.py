@@ -5,33 +5,20 @@ import dash_table
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import pandas as pd
-from db_conn import connect
+import db_conn as dc
 import dash_queries as dq
 import datetime as dt
 import utils
 
 from app import app
 
-mydb = connect()
-
-df_products = pd.read_sql(dq.product_query, mydb)
+df_products = pd.read_sql(dq.product_query, dc.engine)
 #This massages the dataframe into a list of tuples to parse into the options correctly
 product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['description'])]
 
-df_stores = pd.read_sql(dq.stores_query, mydb)
+df_stores = pd.read_sql(dq.stores_query, dc.engine)
 store_values = [(k,v) for k, v in zip(df_stores['storeid'], df_stores['store_addr'])]
 
-
-
-
-
-loader = dcc.Loading(
-    id='loading-1',
-    type='graph',
-    fullscreen=True,
-    style={'background': 'black', 'opacity': 0.6},
-    children=html.Div(id='loading-output-1')
-)
 
 #form controls
 form = html.Div(id='form-cntrl-div', 
@@ -115,7 +102,7 @@ def update_page(input_product, input_store):
     if not input_store:
         input_store = None
 
-    df = pd.read_sql(dq.query, mydb, params=(utils.get_run_dt(),utils.get_run_dt()))
+    df = pd.read_sql(dq.query, dc.engine, params=(utils.get_run_dt(),utils.get_run_dt()))
     
     df['insert_dt'] = df['insert_dt'].dt.date
 

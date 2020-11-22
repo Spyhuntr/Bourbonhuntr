@@ -6,18 +6,17 @@ import dash_table
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from db_conn import connect
+import db_conn as dc
 import dash_queries as dq
 import datetime as dt
 import plotly.graph_objs as go
 import os
+import utils
 
 from app import app
 
 cwd_path = os.path.dirname(__file__)
 mapbox_access_token = open(os.path.join(cwd_path, 'mapbox_token')).read()
-
-now = dt.datetime.utcnow()
 
 quantity_map = html.Div(
     id='map-div',
@@ -48,8 +47,7 @@ layout = html.Div([
 )
 def update_map_page(path):
 
-    mydb = connect()
-    df = pd.read_sql(dq.map_query, mydb, params=([now.date()]))
+    df = pd.read_sql(dq.map_query, dc.engine, params=([utils.get_run_dt()]))
     
     map_fig = go.Figure(go.Scattermapbox(
         lat=df['latitude'], 
@@ -95,8 +93,7 @@ def update_map_page(path):
 )
 def update_map_tbl(store):
 
-    mydb = connect()
-    df = pd.read_sql(dq.map_query, mydb, params=([now.date()]))
+    df = pd.read_sql(dq.map_query, dc.engine, params=([utils.get_run_dt()]))
 
     storeid = ' '
     if store != None:

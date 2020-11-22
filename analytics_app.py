@@ -5,7 +5,7 @@ import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from db_conn import connect
+import db_conn as dc
 import dash_queries as dq
 import datetime as dt
 import plotly.express as px
@@ -103,9 +103,7 @@ layout = html.Div([
 )
 def update_page(path, date):
 
-    mydb = connect()
-
-    df = pd.read_sql(dq.tot_inv_query, mydb, params={date})
+    df = pd.read_sql(dq.tot_inv_query, dc.engine, params={date})
 
     df['quantity'] = df['quantity'].astype(int)
 
@@ -161,9 +159,7 @@ def update_page(path, date, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_b
     else:    
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-    mydb = connect()
-
-    df_line = pd.read_sql(dq.tot_inv_query, mydb, params={date})
+    df_line = pd.read_sql(dq.tot_inv_query, dc.engine, params={date})
 
     date_param = dt.datetime.strptime(date, '%Y-%m-%d').date()
     onewk = date_param - pd.DateOffset(days=7)

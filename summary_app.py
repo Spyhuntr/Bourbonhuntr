@@ -62,7 +62,6 @@ layout = html.Div([
                 html.H3( 
                     id='summary-title',
                     className='text-primary',
-                    children="Welcome to the Bourbonhuntr! Below is the inventory for {}.".format(utils.get_run_dt().strftime('%m-%d-%Y'))
                 )
             ], lg=8, style={'text-align':'center'})
         ], no_gutters=True, justify='center'),
@@ -162,3 +161,10 @@ def toggle_modal(url):
         return info_div
 
 
+@app.callback(
+    Output(component_id="summary-title", component_property='children'),
+    [Input(component_id='url', component_property='pathname')],
+)
+def title_date(url):
+
+    return "Welcome to the Bourbonhuntr! Below is the inventory for {}.".format(utils.get_run_dt().strftime('%m-%d-%Y'))

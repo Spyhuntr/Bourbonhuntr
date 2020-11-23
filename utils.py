@@ -11,7 +11,7 @@ def get_run_dt():
         turnover_time = now().replace(hour=15, minute=0, second=0, microsecond=0)
     else:
         turnover_time = now().replace(hour=16, minute=0, second=0, microsecond=0)
-    
+
     if now().time() < turnover_time.time():
         return now().date() - dt.timedelta(days=1)
     else:

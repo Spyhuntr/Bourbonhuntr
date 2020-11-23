@@ -33,11 +33,14 @@ map_info_table = html.Div(
 )
 
 layout = html.Div([
-            quantity_map,
-            html.Div([
-                map_info_table
-            ], id='map-menu', className="map-menu")
-        ])
+    quantity_map,
+    html.Div(
+    dcc.Loading(
+        id='loading-1',
+        type='graph',
+        children=map_info_table, 
+    ), id='map-menu', className="map-menu")
+])
 
 
 
@@ -59,7 +62,7 @@ def update_map_page(path):
             'opacity': 0.4
         },
         hovertemplate =
-            "%{text}"
+            "%{text}<extra></extra>"
     ))
 
     map_fig.update_layout(

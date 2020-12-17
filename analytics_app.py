@@ -6,10 +6,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import pandas as pd
 import db_conn as dc
-import dash_queries as dq
+import models
 import datetime as dt
 import plotly.express as px
 import utils
+from sqlalchemy import cast, Date, func
+from dateutil.relativedelta import *
 
 from app import app
 
@@ -17,27 +19,26 @@ inv_total_widget = dbc.Card([
     dbc.CardBody([
         dcc.Loading(
             id='loading-1',
-            type='graph',
             children=[
-        dbc.Row([
-            dbc.Col([
-                html.H6('Total Inventory'),
-                html.H3(id='tot-inv')
-            ], sm=6),
-            dbc.Col([
-                dcc.Graph(
-                    id='tot-spark',
-                    config={
-                        'displayModeBar':False,
-                        'staticPlot':True
-                    },
-                    responsive=True,
-                    style={'height':60}),
-                html.P('13 Day Trend', style={'text-align':'center', 'margin':0})
-            ], sm=6)
-        ])
-    ])
-], id='tot_inv_widget')
+                dbc.Row([
+                    dbc.Col([
+                        html.Div([
+                            html.H6('Total Inventory'),
+                            html.H2(id='tot-inv')
+                        ], style={'position':'relative', 'z-index': '999'}),
+                        dcc.Graph(
+                            id='tot-spark',
+                            config={
+                                'displayModeBar':False,
+                                'staticPlot':True
+                            },
+                        responsive=True,
+                        style={'height':60, 'margin':'-1.25rem'})
+                    ])
+                ])
+            ]
+        )
+    ], id='tot_inv_widget')
 ])
 
 
@@ -56,10 +57,12 @@ line_chart = dbc.Card([
         ], justify='end'),
         dcc.Loading(
             id='loading-2',
-            type='graph',
             children=dcc.Graph(
                 id='inv-line-chrt',
-                style={'padding':'1.25rem'}
+                style={'padding':'1.25rem'},
+                config={
+                    'displayModeBar':False
+                }
             )
         )
     ], style={'padding':0}),
@@ -85,13 +88,13 @@ layout = html.Div([
                     style={'padding':'1rem 0.5rem 0 0.5rem'},
                     className='btn-primary'),
             ],
-            className="mb-3")
+            className="mb-2")
         ], className='col-auto')
     ], justify='end'),
     dbc.Row([
-        dbc.Col([inv_total_widget], sm=12, md=4, lg=3),
-        dbc.Col([line_chart], sm=12, md=8, lg=9)
-    ])
+        dbc.Col([inv_total_widget], sm=12, md=4, lg=2),
+        dbc.Col([line_chart], sm=12, md=8, lg=7)
+    ], justify='center')
 ])
 
 
@@ -103,36 +106,46 @@ layout = html.Div([
 )
 def update_page(path, date):
 
-    df = pd.read_sql(dq.tot_inv_query, dc.engine, params={date})
+    date_param = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    thirtydaysago = date_param - pd.to_timedelta("30day")
+
+    query = models.session.query(
+                    cast(models.Bourbon.insert_dt, Date).label('insert_dt'),
+                    func.sum(models.Bourbon.quantity).label('quantity')
+                ) \
+                .group_by(cast(models.Bourbon.insert_dt, Date)) \
+                .filter(
+                    cast(models.Bourbon.insert_dt, Date).between(thirtydaysago, date_param),
+                )
+
+    df = pd.read_sql(query.statement, models.session.bind)
+    models.session.close()
 
     df['quantity'] = df['quantity'].astype(int)
 
-    date_param = dt.datetime.strptime(date, '%Y-%m-%d').date()
-    
     kpi_df = df[(df['insert_dt'] == date_param)]
     kpi_val = '{:,}'.format(kpi_df['quantity'].sum())
 
-    thirteendaysago = date_param - pd.to_timedelta("13day")
-
-    tot_spark_df = df[(df['insert_dt'] >= thirteendaysago)]
-    tot_spark_df = tot_spark_df.groupby(['insert_dt'], as_index=False)['quantity'].sum()
-
-    fig = px.bar(
-        tot_spark_df, 
+    fig = px.area(
+        df, 
         x="insert_dt", y="quantity",
         labels={
             'insert_dt': '',
             'quantity':''
-        }
+        },
+        template='simple_white',
+        log_y=True
     )
     
-    fig.update_yaxes(visible=False)
+    fig.update_yaxes(visible=False),
+    fig.update_xaxes(visible=False),
     fig.update_traces(
-        hovertemplate='%{y:,}'
+        hovertemplate='%{y:,}',
+        line={'color':'rgba(31, 119, 180, 0.2)'},
+        fillcolor='rgba(31, 119, 180, 0.2)'
     ),
     fig.update_layout(
-        margin={'t':0,'l':0,'b':0,'r':0},
-        plot_bgcolor="white"
+        margin={'t':0,'l':0,'b':0,'r':0}
     )
 
 
@@ -159,33 +172,46 @@ def update_page(path, date, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_b
     else:    
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-    df_line = pd.read_sql(dq.tot_inv_query, dc.engine, params={date})
-
     date_param = dt.datetime.strptime(date, '%Y-%m-%d').date()
-    onewk = date_param - pd.DateOffset(days=7)
-    onemonth = date_param - pd.DateOffset(months=1)
-    sixmonth = date_param - pd.DateOffset(months=6)
-    twelvemonth = date_param - pd.DateOffset(months=12)
+    onewk = date_param - relativedelta(days=7)
+    onemonth = date_param - relativedelta(months=1)
+    sixmonth = date_param - relativedelta(months=6)
+    twelvemonth = date_param - relativedelta(months=12)
+
+    query = models.session.query(
+                    cast(models.Bourbon.insert_dt, Date).label('insert_dt'),
+                    func.sum(models.Bourbon.quantity).label('quantity')
+                ) \
+                .group_by(cast(models.Bourbon.insert_dt, Date)) \
+                .filter(
+                    cast(models.Bourbon.insert_dt, Date).between(twelvemonth, date_param),
+                    cast(models.Bourbon.insert_dt, Date) >= '2020-03-01',
+                )
 
     if button_id == 'line-chrt-btn-4':
-        df_line = df_line[(df_line['insert_dt'] >= onewk)]
+        query = query.filter(cast(models.Bourbon.insert_dt, Date) >= onewk)
     if button_id == 'line-chrt-btn-3':
-        df_line = df_line[(df_line['insert_dt'] >= onemonth)]
+        query = query.filter(cast(models.Bourbon.insert_dt, Date) >= onemonth)
     if button_id == 'line-chrt-btn-2':
-        df_line = df_line[(df_line['insert_dt'] >= sixmonth)]
+        query = query.filter(cast(models.Bourbon.insert_dt, Date) >= sixmonth)
     if button_id == 'line-chrt-btn-1':
-        df_line = df_line[(df_line['insert_dt'] >= twelvemonth)]
+        query = query.filter(cast(models.Bourbon.insert_dt, Date) >= twelvemonth)
+
+    df_line = pd.read_sql(query.statement, models.session.bind)
+    models.session.close()
 
     line_fig = px.line(df_line, x='insert_dt', y='quantity', height=200,
                        labels={
                             'insert_dt':'Date',
                             'quantity':'Quantity'
                         },
-                        template='seaborn')
+                        template='simple_white'
+                    )
 
     line_fig.update_layout(
-        margin={'l':0, 'r':0, 't':0, 'b':0},
-        xaxis={'showgrid': False, 'title': ''}
+        margin={'l':0, 'r':0, 't':0.5, 'b':0},
+        xaxis={'showgrid': False, 'title': ''},
+        yaxis={'showgrid': False}
     )
 
     line_fig.update_traces(

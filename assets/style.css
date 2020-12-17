@@ -107,14 +107,3 @@ thead th {
 .CalendarDay__blocked_out_of_range {
     text-decoration: line-through;
 }
-
-.map-menu {
-    position: fixed;
-    box-shadow: 0 7px 14px 0 rgba(65,69,88,.1), 0 3px 6px 0 rgba(0,0,0,.07);
-    width: 350px;
-    top: 5rem;
-    overflow-y: auto;
-    max-height: 50rem;
-    left:25px;
-    background-color: white;
-}

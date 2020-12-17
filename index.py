@@ -35,7 +35,7 @@ navbar = dbc.Navbar([
     ], 
     align='center'),
     icon_set
-], style={'margin-bottom':'0.5rem'})
+], className='mb-2')
 
 
 left_menu = html.Div([
@@ -68,17 +68,17 @@ left_menu = html.Div([
 
 def serve_layout():
     return html.Div([
-    left_menu,
-    dcc.Location(id='url', refresh=False),
-    navbar,
-    dbc.Container([
-        dbc.Row([
-            dbc.Col([
-                html.Div(id='page-content')
-            ], lg=12)
-        ])
-    ], fluid=True),
-    html.Div([], id='overlay')
+        left_menu,
+        dcc.Location(id='url', refresh=False),
+        navbar,
+        dbc.Container([
+            dbc.Row([
+                dbc.Col([
+                    html.Div(id='page-content')
+                ], lg=12)
+            ])
+        ], fluid=True),
+        html.Div(id='overlay')
 ])
 
 app.layout = serve_layout

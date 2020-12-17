@@ -6,60 +6,86 @@ import dash_table
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import pandas as pd
-import db_conn as dc
-import dash_queries as dq
+import models
 import datetime as dt
 import plotly.graph_objs as go
 import os
 import utils
+from sqlalchemy import cast, Date, func
 
 from app import app
 
 cwd_path = os.path.dirname(__file__)
 mapbox_access_token = open(os.path.join(cwd_path, 'mapbox_token')).read()
 
+df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
+models.session.close()
+
+product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['description'])]
+
+#form controls
+form = html.Div(id='form-cntrl-div', 
+            children = [
+                dbc.Row([
+                dbc.Col([
+                    dcc.Dropdown(
+                        id="prod-select",
+                        options=[{'label': i[1], 'value': i[0]} for i in product_values],
+                        placeholder='Select Products...'
+                    )
+                ], lg=4)
+            ], form=True, className='mb-2')
+        ])
+
 quantity_map = html.Div(
     id='map-div',
     children=[ 
         dcc.Graph(
-            id='quantity-map', style={'height':'92vh'}
+            id='quantity-map', style={'height':'87vh'}
         )
     ]
 )
 
-map_info_table = html.Div(
-    id='map-info-div',
-    children=[]
-)
-
 layout = html.Div([
-    quantity_map,
-    html.Div(
-    dcc.Loading(
-        id='loading-1',
-        type='graph',
-        children=map_info_table, 
-    ), id='map-menu', className="map-menu")
+    dbc.Row([
+        dbc.Col([form], sm=12, lg=12),
+        dbc.Col([quantity_map], lg=12)
+    ])
 ])
 
 
 
 @app.callback(
     Output(component_id='quantity-map', component_property='figure'),
-    Input(component_id='url', component_property='pathname')
+    [Input(component_id='url', component_property='pathname'),
+     Input(component_id='prod-select', component_property='value')]
 )
-def update_map_page(path):
+def update_map_page(path, input_product):
 
-    df = pd.read_sql(dq.map_query, dc.engine, params=([utils.get_run_dt()]))
-    
+    map_q = models.session.query(
+                    models.Bourbon.longitude, 
+                    models.Bourbon.latitude, 
+                    func.Concat(models.Bourbon_stores.store_addr_2, ' ', models.Bourbon_stores.store_city).label('store_addr_disp')
+                ) \
+               .join(models.Bourbon_stores) \
+               .filter(
+                   cast(models.Bourbon.insert_dt, Date) == utils.get_run_dt(),
+                   
+                )
+
+    if input_product:
+        map_q = map_q.filter(models.Bourbon.productid == input_product)
+
+    df = pd.read_sql(map_q.statement, models.session.bind)
+    models.session.close()
+
     map_fig = go.Figure(go.Scattermapbox(
         lat=df['latitude'], 
         lon=df['longitude'],
         mode='markers',
-        text=df['store_addr'],
+        text=df['store_addr_disp'],
         marker={
-            'size': 15,
-            'opacity': 0.4
+            'size': 15
         },
         hovertemplate =
             "%{text}<extra></extra>"
@@ -82,46 +108,8 @@ def update_map_page(path):
         },
         hoverlabel={
             'bgcolor':'white',
-            'font_size':16
+            'font_size':16,
+            'font_family':'Lato'
         })
 
     return map_fig
-
-
-
-
-@app.callback(
-    Output(component_id='map-info-div', component_property='children'),
-    Input(component_id='quantity-map', component_property='clickData')
-)
-def update_map_tbl(store):
-
-    df = pd.read_sql(dq.map_query, dc.engine, params=([utils.get_run_dt()]))
-
-    storeid = ' '
-    if store != None:
-        store = store['points'][0]['text']
-        storeid = store.split('-')
-
-    df_table = df[['storeid','description','quantity']]
-    df_table = df_table[(df_table['storeid'] == storeid[0])]
-    df_table.columns = ['Store','Product', 'Quantity']
-
-    hdr_list = []
-    for hdr in df_table.columns:
-        hdr_list.append(html.Th(hdr))
-    
-    table_header = [html.Thead(html.Tr(hdr_list))]
-
-    tbody = []
-    for data in df_table.values:
-        row_data=[]
-        for i in data:
-            row_data.append(html.Td(i))
-                
-        tbody.append(html.Tr(row_data))
-    table_body = [html.Tbody(tbody)]
-
-    dash_tbl = dbc.Table(table_header + table_body, bordered=True, striped=True)
-
-    return dash_tbl

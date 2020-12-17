@@ -6,19 +6,19 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import pandas as pd
 import db_conn as dc
-import dash_queries as dq
+import models
 import datetime as dt
 import utils
+from sqlalchemy import cast, Date
 
 from app import app
 
-df_products = pd.read_sql(dq.product_query, dc.engine)
-#This massages the dataframe into a list of tuples to parse into the options correctly
+df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
 product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['description'])]
 
-df_stores = pd.read_sql(dq.stores_query, dc.engine)
-store_values = [(k,v) for k, v in zip(df_stores['storeid'], df_stores['store_addr'])]
-
+df_stores = pd.read_sql(models.store_list_q.statement, models.session.bind)
+store_values = [(k,v) for k, v in zip(df_stores['storeid'], df_stores['store_addr_disp'])]
+models.session.close()
 
 #form controls
 form = html.Div(id='form-cntrl-div', 
@@ -31,7 +31,7 @@ form = html.Div(id='form-cntrl-div',
                         multi=True,
                         placeholder='Select Products...'
                     )
-                ], lg=4),
+                ], md=6, lg=4, className='mb-2'),
                 dbc.Col([
                     dcc.Dropdown(
                         id="store-select",
@@ -39,51 +39,42 @@ form = html.Div(id='form-cntrl-div',
                         multi=True,
                         placeholder='Select Stores...'
                     )
-                ], lg=4)
-            ], justify='center', form=True)
+                ], md=6, lg=4)
+            ], justify='center', form=True, className='mb-2')
         ])
 
 
-quantity_tbl = html.Div(
-    id='quantity-tbl-div',
-    children=[]
-)
+quantity_tbl = html.Div(id='quantity-tbl-div')
 
 layout = html.Div([
-    dbc.Container([
-        dbc.Row([
-            dbc.Col([
-                html.Div([], 
-                id='info-div')
-            ], lg=7)
-        ], justify='center'),
-        dbc.Row([
-            dbc.Col([
-                html.H3( 
-                    id='summary-title',
-                    className='text-primary',
-                )
-            ], lg=8, style={'text-align':'center'})
-        ], no_gutters=True, justify='center'),
-        dbc.Row([
-            dbc.Col([
-                html.P(html.B("""This dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
-                           If you wish to know if a product is currently available, please go to the VA ABC site."""))
-            ], lg=12, style={'text-align':'center'})
-        ], no_gutters=True, justify='center'),
-        dbc.Row([
-            dbc.Col([form], sm=12, lg=12)
-        ]),
-        html.Br(),
-        dbc.Row([
-            dbc.Col([
-                dcc.Loading(
-                    id='loading-output-1',
-                    type='graph',
-                    children=quantity_tbl
-                )], lg=10)
-        ], justify='center')
-    ], fluid=True)
+    dbc.Row([
+        dbc.Col([
+            html.Div(id='info-div')
+        ], lg=7)
+    ], justify='center'),
+    dbc.Row([
+        dbc.Col([
+            html.H3( 
+                id='summary-title',
+                className='text-primary',
+            )
+        ], lg=8, style={'text-align':'center'}),
+
+        dbc.Col([
+            html.P(html.B("""This dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
+                    If you wish to know if a product is currently available, please go to the VA ABC site."""))
+        ], lg=12, style={'text-align':'center'})
+    ], no_gutters=True, justify='center'),
+    dbc.Row([
+        dbc.Col([form], sm=12, lg=12)
+    ]),
+    dbc.Row([
+        dbc.Col([
+            dcc.Loading(
+                id='loading-output-1',
+                children=quantity_tbl
+            )], lg=10)
+    ], justify='center')
 ])
 
 
@@ -96,35 +87,37 @@ layout = html.Div([
 )
 def update_page(input_product, input_store):
 
-    if not input_product:
-        input_product = None
-    if not input_store:
-        input_store = None
+    query = models.session.query(
+                    models.Bourbon.storeid, 
+                    models.Bourbon_stores.store_full_addr,
+                    models.Bourbon_desc.description,
+                    models.Bourbon.quantity
+                ) \
+               .join(models.Bourbon_stores) \
+               .join(models.Bourbon_desc) \
+               .filter(
+                   cast(models.Bourbon.insert_dt, Date) == utils.get_run_dt(),
+                )
 
-    df = pd.read_sql(dq.query, dc.engine, params=(utils.get_run_dt(),utils.get_run_dt()))
-    
-    df['insert_dt'] = df['insert_dt'].dt.date
+    if input_product:
+        query = query.filter(models.Bourbon.productid.in_((input_product)))
+    if input_store:
+        query = query.filter(models.Bourbon.storeid.in_((input_store)))
 
-    input_product = df['productid'] if input_product == None else input_product
-    input_store = df['storeid'] if input_store == None else input_store
-    
-    
-    df_filtered = df[(df['productid'].isin(input_product)) & 
-                     (df['storeid'].isin(input_store))]
+    df = pd.read_sql(query.statement, models.session.bind)
+    models.session.close()
 
     #data table
-    df_table = df_filtered[['storeid', 'store_full_addr', 'description', 'quantity']]
-    
-    df_table.columns = ['Store #', 'Store Address', 'Product', 'Quantity']
+    df.columns = ['Store #', 'Store Address', 'Product', 'Quantity']
 
     hdr_list = []
-    for hdr in df_table.columns:
+    for hdr in df.columns:
         hdr_list.append(html.Th(hdr))
     
     table_header = [html.Thead(html.Tr(hdr_list))]
 
     tbody = []
-    for data in df_table.values:
+    for data in df.values:
         row_data=[]
         for ind, i in enumerate(data):
             if ind == 1:
@@ -141,7 +134,6 @@ def update_page(input_product, input_store):
 
 
     dash_tbl = dbc.Table(table_header + table_body, bordered=True, striped=True)
-
     return dash_tbl
 
 @app.callback(

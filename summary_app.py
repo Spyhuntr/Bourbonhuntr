@@ -10,6 +10,8 @@ import models
 import datetime as dt
 import utils
 from sqlalchemy import cast, Date
+import pytz
+import time
 
 from app import app
 
@@ -142,6 +144,7 @@ def update_page(input_product, input_store):
 )
 def toggle_modal(url):
 
+    db_start_time = utils.now().replace(hour=5, minute=0, second=0, microsecond=0)
     db_done_time = utils.now().replace(hour=16, minute=0, second=0, microsecond=0)
 
     info_div = html.Div([
@@ -149,7 +152,7 @@ def toggle_modal(url):
         html.P("The database has not finished updating for {}.".format(utils.now().strftime('%m-%d-%Y')))
     ], className='alert alert-dismissible alert-warning')
 
-    if utils.now().time() < db_done_time.time():
+    if db_start_time.time() <= utils.now().time() < db_done_time.time():
         return info_div
 
 

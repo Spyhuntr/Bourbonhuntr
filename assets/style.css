@@ -64,7 +64,11 @@ thead th {
     position: relative;
 }
 
-.side-nav .side-nav-link i {
+.side-nav .side-sub-menu-hdr {
+    cursor: default;
+}
+
+.side-nav .side-nav-link i{
     display: inline-block;
     line-height: 1.0625rem;
     margin: 0 10px 0 0;
@@ -77,12 +81,29 @@ thead th {
     vertical-align: middle;
 }
 
-.side-nav-link:hover {
+.side-nav a:hover {
+    text-decoration: none;
+}
+
+.side-nav .side-sub-link {
+    color: #6c757d;
+    display: block;
+    padding-top: 10px;
+    font-size: .9375rem;
+    position: relative;
+}
+
+.side-nav-link:hover,
+.side-sub-link:hover {
     color: #1A73E8;
 }
 
-.side-nav a:hover {
-    text-decoration: none;
+.map-sub-menu {
+    display: none;
+}
+
+.side-sub-menu-hdr:hover ul {
+    display:block;
 }
 
 #overlay {

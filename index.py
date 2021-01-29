@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output
 import os
 
 from app import app
-import summary_app, analytics_app, map_app
+import summary_app, analytics_app, map_app, distro_app
 
 server = app.server
 
@@ -56,12 +56,22 @@ left_menu = html.Div([
                 html.Span('Analytics') 
             ], id='anala_link', className='side-nav-link')
         ], href='/analytics_app', refresh=True),
-        dcc.Link([
-            html.Li([
-                html.I(id='map_icon', className='fas fa-map'), 
-                html.Span('Map') 
-            ], id='map_link', className='side-nav-link')
-        ], href='/map_app', refresh=True)
+        html.Li([
+            html.I(id='map_icon', className='fas fa-map'), 
+            html.Span('Maps'),
+            html.Ul([
+                dcc.Link([
+                    html.Li([
+                        html.Span('Current Inventory') 
+                    ], id='map_ci_link', className = 'side-sub-link')
+                ], href='/map_app', refresh=True),
+                dcc.Link([
+                    html.Li([
+                        html.Span('Distribution Over Time') 
+                    ], id='distro_link', className = 'side-sub-link')
+                ], href='/distro_app', refresh=True)
+            ], id='map_sub_menu', className='map-sub-menu') 
+        ], id='maps_link', className='side-nav-link side-sub-menu-hdr')
     ], className='side-nav', style={'padding': '0'})
 ], id='left-side-menu', className="left-side-menu")
 
@@ -92,6 +102,8 @@ def display_page(pathname):
         return analytics_app.layout
     if pathname == '/map_app':
         return map_app.layout
+    if pathname == '/distro_app':
+        return distro_app.layout
     else:
         return '404'
 
@@ -103,7 +115,7 @@ def display_page(pathname):
      Input('overlay', 'n_clicks'),
      Input('daily_inv_link', 'n_clicks'),
      Input('anala_link', 'n_clicks'),
-     Input('map_link', 'n_clicks')])
+     Input('map_ci_link', 'n_clicks')])
 def disp_menu(n1, n2, n3, n4, n5):
     ctx = dash.callback_context
 

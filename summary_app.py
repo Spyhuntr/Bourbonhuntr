@@ -37,7 +37,7 @@ form = html.Div(id='form-cntrl-div',
                 dbc.Col([
                     dcc.Dropdown(
                         id="store-select",
-                        options=[{'label': i[1], 'value': i[0]} for i in store_values],
+                        options=[{'label': '#' + i[0] + '-' + i[1], 'value': i[0]} for i in store_values],
                         multi=True,
                         placeholder='Select Stores...'
                     )

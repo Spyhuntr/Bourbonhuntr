@@ -10,9 +10,7 @@ import models
 import datetime as dt
 import utils
 from sqlalchemy import cast, Date
-import pytz
 import time
-
 from app import app
 
 df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
@@ -133,7 +131,6 @@ def update_page(input_product, input_store):
                 
         tbody.append(html.Tr(row_data))
     table_body = [html.Tbody(tbody)]
-
 
     dash_tbl = dbc.Table(table_header + table_body, bordered=True, striped=True)
     return dash_tbl

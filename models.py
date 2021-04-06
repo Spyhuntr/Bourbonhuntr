@@ -20,6 +20,7 @@ class Bourbon(Base):
     linenumber = Column(String)
     phone_number = Column(String)
     insert_dt = Column(Date)
+    insert_date = column_property(cast(insert_dt, Date))
 
 
 class Bourbon_desc(Base):
@@ -53,6 +54,11 @@ class Bourbon_stores(Base):
 Bourbon.products = relationship('Bourbon_desc', order_by=Bourbon_desc.productid, back_populates='bourbon')
 Bourbon.stores = relationship('Bourbon_stores', order_by=Bourbon_stores.storeid, back_populates='bourbon')
 
+class ETL_control_status(Base):
+    __tablename__ = 'etl_control_status'
+
+    load_status = Column(String, primary_key=True)
+    load_date = Column(Date)
 
 
 Session = sessionmaker(bind=engine)

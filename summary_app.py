@@ -141,15 +141,12 @@ def update_page(input_product, input_store):
 )
 def toggle_modal(url):
 
-    db_start_time = utils.now().replace(hour=5, minute=0, second=0, microsecond=0)
-    db_done_time = utils.now().replace(hour=16, minute=0, second=0, microsecond=0)
-
     info_div = html.Div([
         html.H4("Heads up!"),
         html.P("The database has not finished updating for {}.".format(utils.now().strftime('%m-%d-%Y')))
     ], className='alert alert-dismissible alert-warning')
 
-    if db_start_time.time() <= utils.now().time() < db_done_time.time():
+    if not utils.is_data_loading():
         return info_div
 
 

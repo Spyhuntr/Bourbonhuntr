@@ -25,7 +25,7 @@ inv_total_widget = dbc.Card([
                 dbc.Row([
                     dbc.Col([
                         html.Div([
-                            html.H6('Total Inventory'),
+                            html.H6(id='tot-inv-title'),
                             html.H2(id='tot-inv')
                         ], style={'position':'relative', 'z-index': '999'}),
                         dcc.Graph(
@@ -46,26 +46,26 @@ inv_total_widget = dbc.Card([
 inv_ytd_widget = dbc.Card([
     dbc.CardBody([
         dcc.Loading(
-            id='loading-1',
+            id='loading-2',
             children=[
                 dbc.Row([
                     dbc.Col([
                         html.Div([
-                            html.H6('YTD Inventory'),
-                            html.H2(id='ytd-inv')
+                            html.H6('YTD Max'),
+                            html.H4(id='ytd-inv')
                         ])
                     ]),
                     dbc.Col([
                         html.Div([
                             html.H6('Year-over-Year'),
-                            html.H3(id='yoy-var-inv')
+                            html.H4(id='yoy-var-inv')
                         ])
                     ])
-                ])
+                ], justify='between')
             ]
         )
     ], id='inv_ytd_widget')
-], className='mb-2')
+])
 
 
 line_chart = dbc.Card([
@@ -82,7 +82,7 @@ line_chart = dbc.Card([
             ], className='col-auto')
         ], justify='end'),
         dcc.Loading(
-            id='loading-2',
+            id='loading-3',
             children=dcc.Graph(
                 id='inv-line-chrt',
                 style={'padding':'1.25rem'},
@@ -93,6 +93,18 @@ line_chart = dbc.Card([
         )
     ], style={'padding':0}),
     html.Div(id='line-chrt-btn-value', style={'display': 'none'})
+])
+
+hbar_chart = dbc.Card([
+    dbc.CardHeader('Top 20 Stores'),
+    dbc.CardBody([
+        dcc.Loading(
+            id='loading-4',
+            children=dcc.Graph(
+                id='inv-hbar-chrt'
+            )
+        )
+    ])
 ])
 
 
@@ -127,6 +139,9 @@ layout = html.Div([
     dbc.Row([
         dbc.Col([inv_total_widget, inv_ytd_widget], sm=12, md=4, lg=2),
         dbc.Col([line_chart], sm=12, md=8, lg=7),
+    ], className='mb-2', justify='center', align='center'),
+    dbc.Row([
+        dbc.Col([hbar_chart], sm=12, md=6, lg=6),
     ], justify='center')], style={'display': 'none'})
 ])
 
@@ -134,12 +149,12 @@ layout = html.Div([
 @app.callback(
     [Output(component_id='tot-inv', component_property='children'),
      Output(component_id='tot-spark', component_property='figure'),
-     Output(component_id='ytd-inv', component_property='children')],
-    [Input(component_id='url', component_property='pathname'),
-     Input(component_id='dt-picker', component_property='date'),
+     Output(component_id='ytd-inv', component_property='children'),
+     Output(component_id='tot-inv-title', component_property='children')],
+    [Input(component_id='dt-picker', component_property='date'),
      Input(component_id='prod-select', component_property='value')]
 )
-def update_page(path, date, product):
+def update_page(date, product):
 
     today = dt.datetime.strptime(date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
@@ -162,9 +177,9 @@ def update_page(path, date, product):
 
     kpi_df = df[(df['insert_date'] == today)]
 
-    kpi_val = '{:,}'.format(kpi_df['quantity'].sum())
+    kpi_val = f'{kpi_df["quantity"].sum():,}'.format()
 
-    ytd_val = '{:,}'.format(df['quantity'].sum())
+    ytd_val = f'{df["quantity"].cummax().max():,}'
 
     spark_area_df = df[(df['insert_date'] >= thirtydaysago)]
 
@@ -189,17 +204,17 @@ def update_page(path, date, product):
         margin={'t':0,'l':0,'b':0,'r':0}
     )
 
+    tot_inv_title = today.strftime('%m/%d/%Y') + ' Inventory'
 
-    return kpi_val, fig, ytd_val
+    return kpi_val, fig, ytd_val, tot_inv_title
 
 
 @app.callback(
     Output(component_id='yoy-var-inv', component_property='children'),
-    [Input(component_id='url', component_property='pathname'),
-     Input(component_id='dt-picker', component_property='date'),
+    [Input(component_id='dt-picker', component_property='date'),
      Input(component_id='prod-select', component_property='value')]
 )
-def update_page(path, date, product):
+def update_page(date, product):
     
     today = dt.datetime.strptime(date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
@@ -223,19 +238,19 @@ def update_page(path, date, product):
 
     last_yr_quantity = df[(df['insert_date'].between(start_of_prev_year, same_day_last_year))]
     this_yr_quantity = df[(df['insert_date'].between(start_of_year, today))]
-    
+
     yoy_var = 0
-    if last_yr_quantity['quantity'].sum() != 0:
-        yoy_var = 1 - ((last_yr_quantity['quantity'].sum() - this_yr_quantity['quantity'].sum()) / last_yr_quantity['quantity'].sum()) * 100
-    
+    if not pd.isnull(last_yr_quantity['quantity'].cummax().max()):
+        yoy_var = ((this_yr_quantity['quantity'].cummax().max() - last_yr_quantity['quantity'].cummax().max()) / last_yr_quantity['quantity'].cummax().max()) * 100
+ 
+    arrow = html.I(style={'padding-left': '0.2rem'})
     if yoy_var < 0:
-        arrow = html.I(className='fas fa-arrow-down', 
-                       style={'padding-left': '0.4rem', 'color':'red'})
+        arrow.className = 'fas fa-arrow-down red'
     elif yoy_var > 0:
-        arrow = html.I(className='fas fa-arrow-up', 
-                       style={'padding-left': '0.4rem','color':'green'})
+        arrow.className = 'fas fa-arrow-up green'
     else:
-        arrow = ''
+        ''
+
 
     return [f'{abs(yoy_var):,.1f}%', arrow]
 
@@ -245,15 +260,14 @@ def update_page(path, date, product):
 @app.callback(
     [Output(component_id='inv-line-chrt', component_property='figure'),
      Output(component_id='line-chrt-btn-value', component_property='children')],
-    [Input(component_id='url', component_property='pathname'),
-     Input(component_id='dt-picker', component_property='date'),
+    [Input(component_id='dt-picker', component_property='date'),
      Input(component_id='prod-select', component_property='value'),
      Input(component_id='line-chrt-btn-1', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-2', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-3', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-4', component_property='n_clicks')]
 )
-def update_page(path, date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
+def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
 
     ctx = dash.callback_context
 
@@ -294,18 +308,22 @@ def update_page(path, date, product, twelve_mths_btn, six_mths_btn, one_mth_btn,
     if df_line.empty:
         return utils.no_data_figure, button_id
 
-    line_fig = px.line(df_line, x='insert_date', y='quantity', height=200,
-                       labels={
-                            'insert_date':'Date',
-                            'quantity':'Quantity'
-                        },
-                        template='simple_white'
-                    )
+    line_fig = px.line(
+                df_line, 
+                x='insert_date', 
+                y='quantity', 
+                height=200,
+                labels={
+                    'insert_date':'Date',
+                    'quantity':'Quantity'
+                },
+                template='simple_white'
+    )
 
     line_fig.update_layout(
         margin={'l':0, 'r':0, 't':0.5, 'b':0},
         xaxis={'showgrid': False, 'title': ''},
-        yaxis={'showgrid': False}
+        yaxis={'showgrid': True}
     )
 
     line_fig.update_traces(
@@ -317,13 +335,61 @@ def update_page(path, date, product, twelve_mths_btn, six_mths_btn, one_mth_btn,
     return line_fig, button_id
 
 
+@app.callback(
+    Output(component_id='inv-hbar-chrt', component_property='figure'),
+    [Input(component_id='dt-picker', component_property='date'),
+     Input(component_id='prod-select', component_property='value')]
+)
+def update_hbar_chrt(date, product):
+
+    today = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    start_of_year = today.replace(month=1, day=1)
+    thirtydaysago = today - dt.timedelta(30)
+
+    query = models.session.query(
+                    models.Bourbon.storeid.label('storeid'),
+                    func.sum(models.Bourbon.quantity).label('quantity')
+                ) \
+                .group_by(models.Bourbon.storeid) \
+                .filter(
+                    models.Bourbon.insert_date.between(start_of_year, date),
+                    models.Bourbon.productid == product
+                )
+                
+
+    df = pd.read_sql(query.statement, models.session.bind)
+    models.session.close()
+
+    df.sort_values(by='quantity', inplace=True, ascending=False)
+
+    hbar_fig = px.bar(
+                df.head(20), 
+                x='quantity', 
+                y='storeid', 
+                orientation='h',
+                height=380,
+                labels={
+                    'storeid':'Store',
+                    'quantity':'Quantity'
+                },
+                template='simple_white'
+    )
+
+    hbar_fig.update_layout(
+        yaxis={'autorange':'reversed'},
+        margin={'t':0,'l':0,'b':0,'r':0}
+    )
+
+    return hbar_fig
+
 
 @app.callback(
     [Output(f"line-chrt-btn-{i}", "active") for i in range(1,5)],
     [Input("line-chrt-btn-value", "children")],
 )
 def set_active_button(button_id):
-    if button_id in ('', 'prod-select'):
+
+    if button_id in ('', 'prod-select', None):
         return [True, False, False, False]
     else:
         return [button_id == f"line-chrt-btn-{i}" for i in range(1,5)]
@@ -332,7 +398,7 @@ def set_active_button(button_id):
 @app.callback(
     [Output('prod-select', 'style'),
      Output('analytics_app_page','style')],
-    [Input('prod-select', 'value')]
+    Input('prod-select', 'value')
 )
 def empty_chart(product):
     if product is None:

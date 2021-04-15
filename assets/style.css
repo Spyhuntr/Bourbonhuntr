@@ -143,3 +143,21 @@ thead th {
     border-radius: 4px 0 0 4px;
     border: 1px solid #ccc !important;
 }
+
+#menu-button {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: 0.3s;
+}
+
+#menu-button:hover {
+    opacity: 1
+}
+
+.red {
+    color: red
+}
+
+.green {
+    color: green
+}

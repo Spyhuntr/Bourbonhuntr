@@ -30,7 +30,7 @@ icon_set = dbc.Row(
 
 navbar = dbc.Navbar([
     dbc.Row([
-        html.I(id='menu-button', className='fas fa-bars fa-2x fa-fw', style={'cursor':'pointer'}),
+        html.I(id='menu-button', className='fas fa-bars fa-2x fa-fw'),
         dbc.Col(html.Img(src=os.path.join(cwd_path, '/assets/TheBourbonHuntr_Logo_v1.png'), height='50px')),
     ], 
     align='center'),
@@ -58,7 +58,7 @@ left_menu = html.Div([
         ], href='/analytics_app', refresh=True),
         html.Li([
             html.I(id='map_icon', className='fas fa-map'), 
-            html.Span('Maps'),
+            html.Span('Maps...'),
             html.Ul([
                 dcc.Link([
                     html.Li([

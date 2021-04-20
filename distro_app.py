@@ -39,7 +39,7 @@ distro_map = html.Div(
     dcc.Loading(
         id='loading-1',
         children=dcc.Graph(
-            id='distro-map', style={'height':'87vh'}
+            id='distro-map', style={'height':'85vh'}
         )
     )
 )
@@ -64,12 +64,12 @@ def update_map_page(path, input_product):
                     models.Bourbon.longitude, 
                     models.Bourbon.latitude, 
                     func.Concat(models.Bourbon_stores.store_addr_2, ' ', models.Bourbon_stores.store_city).label('store_addr_disp'),
-                    cast(models.Bourbon.insert_dt, Date).label('date'),
+                    cast(models.Bourbon.insert_date, Date).label('date'),
                     models.Bourbon.quantity
                 ) \
                .join(models.Bourbon_stores) \
                .filter(
-                    cast(models.Bourbon.insert_dt, Date) >= '2020-03-01',
+                    cast(models.Bourbon.insert_date, Date) >= '2020-03-01',
                     models.Bourbon.productid == input_product
                 )
 

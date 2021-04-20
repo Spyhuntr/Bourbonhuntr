@@ -4,6 +4,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+import dash_table as dasht
 import pandas as pd
 import models
 import datetime as dt
@@ -100,7 +101,7 @@ hbar_chart = dbc.Card([
     dbc.CardBody([
         dcc.Loading(
             id='loading-4',
-            children=dcc.Graph(
+            children=html.Div(
                 id='inv-hbar-chrt'
             )
         )
@@ -177,9 +178,9 @@ def update_page(date, product):
 
     kpi_df = df[(df['insert_date'] == today)]
 
-    kpi_val = f'{kpi_df["quantity"].sum():,}'.format()
+    kpi_val = f'{kpi_df["quantity"].sum():,}'
 
-    ytd_val = f'{df["quantity"].cummax().max():,}'
+    ytd_val = 0 if df["quantity"].sum() == 0 else f'{df["quantity"].cummax().max():,}'
 
     spark_area_df = df[(df['insert_date'] >= thirtydaysago)]
 
@@ -336,7 +337,7 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
 
 
 @app.callback(
-    Output(component_id='inv-hbar-chrt', component_property='figure'),
+    Output(component_id='inv-hbar-chrt', component_property='children'),
     [Input(component_id='dt-picker', component_property='date'),
      Input(component_id='prod-select', component_property='value')]
 )
@@ -348,8 +349,11 @@ def update_hbar_chrt(date, product):
 
     query = models.session.query(
                     models.Bourbon.storeid.label('storeid'),
-                    func.sum(models.Bourbon.quantity).label('quantity')
+                    models.Bourbon_stores.store_city.label('store_city'),
+                    func.avg(models.Bourbon.quantity).label('quantity'),
+                    func.max(models.Bourbon.insert_date).label('last_seen')
                 ) \
+                .join(models.Bourbon_stores) \
                 .group_by(models.Bourbon.storeid) \
                 .filter(
                     models.Bourbon.insert_date.between(start_of_year, date),
@@ -361,26 +365,28 @@ def update_hbar_chrt(date, product):
     models.session.close()
 
     df.sort_values(by='quantity', inplace=True, ascending=False)
+    df.columns = ['Store', 'Store City', 'Avg. Quantity', 'Last Seen']
 
-    hbar_fig = px.bar(
-                df.head(20), 
-                x='quantity', 
-                y='storeid', 
-                orientation='h',
-                height=380,
-                labels={
-                    'storeid':'Store',
-                    'quantity':'Quantity'
-                },
-                template='simple_white'
+    table_fig = dasht.DataTable(
+        id='top_tbl',
+        columns=[{'name': i, 'id': i} for i in df.columns],
+        data = df.head(20).to_dict('records'),
+        page_size=10,
+        style_as_list_view=True,
+        style_cell={'padding': '5px', 'font-family': "'Lato', sans-serif"},
+        style_header={
+            'backgroundColor': 'white',
+            'fontWeight': 'bold'
+        },
+        style_cell_conditional=[
+            {
+                'if': {'column_id': c},
+                'textAlign': 'left'
+            } for c in ['Store', 'Store City']
+        ]
     )
 
-    hbar_fig.update_layout(
-        yaxis={'autorange':'reversed'},
-        margin={'t':0,'l':0,'b':0,'r':0}
-    )
-
-    return hbar_fig
+    return table_fig
 
 
 @app.callback(

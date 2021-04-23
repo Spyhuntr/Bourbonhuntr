@@ -61,7 +61,7 @@ layout = html.Div([
         ], lg=8, style={'text-align':'center'}),
 
         dbc.Col([
-            html.P(html.B("""This dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
+            html.P(html.B("""This site tracks bourbon inventory in Virginia and the dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
                     If you wish to know if a product is currently available, please go to the VA ABC site."""))
         ], lg=12, style={'text-align':'center'})
     ], no_gutters=True, justify='center'),

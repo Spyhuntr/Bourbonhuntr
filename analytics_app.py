@@ -62,11 +62,11 @@ inv_ytd_widget = dbc.Card([
                             html.H4(id='yoy-var-inv')
                         ])
                     ])
-                ], justify='between')
+                ])
             ]
         )
     ], id='inv_ytd_widget')
-])
+], className='mb-2')
 
 
 line_chart = dbc.Card([
@@ -119,7 +119,7 @@ layout = html.Div([
                 options=[{'label': i[1], 'value': i[0]} for i in product_values],
                 placeholder='Select Product...'
             )
-        ], md=6, lg=3, className='mb-2'),
+        ], md=6, lg=5, className='mb-2'),
         dbc.Col([
             dbc.InputGroup([
                 dcc.DatePickerSingle(
@@ -138,12 +138,12 @@ layout = html.Div([
     ], justify='end'),
     html.Div(id='analytics_app_page', children=[
     dbc.Row([
-        dbc.Col([inv_total_widget, inv_ytd_widget], sm=12, md=4, lg=2),
-        dbc.Col([line_chart], sm=12, md=8, lg=7),
-    ], className='mb-2', justify='center', align='center'),
+        dbc.Col([inv_total_widget, inv_ytd_widget], sm=12, md=4, lg=3),
+        dbc.Col([line_chart], sm=12, md=8, lg=9),
+    ], className='mb-2', align='center'),
     dbc.Row([
         dbc.Col([hbar_chart], sm=12, md=6, lg=6),
-    ], justify='center')], style={'display': 'none'})
+    ])], style={'display': 'none'})
 ])
 
 

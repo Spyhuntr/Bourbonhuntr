@@ -13,29 +13,24 @@ server = app.server
 cwd_path = os.path.dirname(__file__)
 
 #begin layout section
-icon_set = dbc.Row(
-    [
-        dbc.Col([
+icon_set = dbc.Col([
             html.A(
                 href="https://abc.virginia.gov",
                 children=html.I(id='more-sites', className='fas fa-store fa-lg fa-fw'),
                 target="_blank"
             )
-        ])
-    ],
-    no_gutters=True,
-    className='ml-auto',
-    align='center',
-)
+        ], width=1)
 
-navbar = dbc.Navbar([
-    dbc.Row([
-        html.I(id='menu-button', className='fas fa-bars fa-2x fa-fw'),
-        dbc.Col(html.Img(src=os.path.join(cwd_path, '/assets/TheBourbonHuntr_Logo_v1.png'), height='50px')),
-    ], 
-    align='center'),
-    icon_set
-], className='mb-2')
+navbar = dbc.Row([
+        dbc.Col(
+            html.I(id='menu-button', className='fas fa-bars fa-2x fa-fw'),
+        width=1, className='col-sm-auto'),
+        dbc.Col(
+            html.Div(
+                html.Img(src=os.path.join(cwd_path, '/assets/TheBourbonHuntr_Logo_v1.png'), height='50px')
+            ), className='navbar-title'),
+        icon_set
+    ], className='navbar', align='center')
 
 
 left_menu = html.Div([

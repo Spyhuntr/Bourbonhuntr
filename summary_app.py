@@ -1,16 +1,14 @@
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
-import dash_table
+import dash_table as dasht
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import pandas as pd
-import db_conn as dc
 import models
-import datetime as dt
 import utils
-from sqlalchemy import cast, Date
-import time
+import sd_material_ui as mui
+
 from app import app
 
 df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
@@ -40,7 +38,7 @@ form = html.Div(id='form-cntrl-div',
                         placeholder='Select Stores...'
                     )
                 ], md=6, lg=4)
-            ], justify='center', form=True, className='mb-2')
+            ], justify='center', className='mb-2')
         ])
 
 
@@ -48,23 +46,13 @@ quantity_tbl = html.Div(id='quantity-tbl-div')
 
 layout = html.Div([
     dbc.Row([
-        dbc.Col([
-            html.Div(id='info-div')
-        ], lg=7)
-    ], justify='center'),
-    dbc.Row([
-        dbc.Col([
-            html.H3( 
-                id='summary-title',
-                className='text-primary',
-            )
-        ], lg=8, style={'text-align':'center'}),
-
-        dbc.Col([
-            html.P(html.B("""This site tracks bourbon inventory in Virginia and the dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
-                    If you wish to know if a product is currently available, please go to the VA ABC site."""))
-        ], lg=12, style={'text-align':'center'})
+        html.H3(id='summary-title', className='header')
     ], no_gutters=True, justify='center'),
+    dbc.Row([
+        html.P("""This site tracks bourbon inventory in Virginia and the dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
+                If you wish to know if a product is currently available, please go to the VA ABC site.""", 
+                className='sub-header')
+    ], no_gutters=True, justify='center', style={'text-align': 'center'}),
     dbc.Row([
         dbc.Col([form], sm=12, lg=12)
     ]),
@@ -74,7 +62,14 @@ layout = html.Div([
                 id='loading-output-1',
                 children=quantity_tbl
             )], lg=10)
-    ], justify='center')
+    ], justify='center'),
+
+    mui.Snackbar(
+        id='snackbar',
+        message=f'Heads up! The database has not finished updating for {utils.now().strftime("%m-%d-%Y")}.',
+        autoHideDuration=10000
+    )
+
 ])
 
 
@@ -96,7 +91,7 @@ def update_page(input_product, input_store):
                .join(models.Bourbon_stores) \
                .join(models.Bourbon_desc) \
                .filter(
-                   cast(models.Bourbon.insert_dt, Date) == utils.get_run_dt(),
+                   models.Bourbon.insert_date == utils.get_run_dt()
                 )
 
     if input_product:
@@ -107,7 +102,6 @@ def update_page(input_product, input_store):
     df = pd.read_sql(query.statement, models.session.bind)
     models.session.close()
 
-    #data table
     df.columns = ['Store #', 'Store Address', 'Product', 'Quantity']
 
     hdr_list = []
@@ -136,18 +130,13 @@ def update_page(input_product, input_store):
     return dash_tbl
 
 @app.callback(
-    Output(component_id="info-div", component_property='children'),
+    Output(component_id="snackbar", component_property='open'),
     [Input(component_id='url', component_property='pathname')],
 )
 def toggle_modal(url):
 
-    info_div = html.Div([
-        html.H4("Heads up!"),
-        html.P("The database has not finished updating for {}.".format(utils.now().strftime('%m-%d-%Y')))
-    ], className='alert alert-dismissible alert-warning')
-
     if not utils.is_data_loading():
-        return info_div
+        return True
 
 
 @app.callback(

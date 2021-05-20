@@ -3,7 +3,7 @@ import flask
 import dash_bootstrap_components as dbc
 
 app = dash.Dash(__name__, 
-    external_stylesheets=[dbc.themes.SPACELAB], 
+    external_stylesheets=[dbc.themes.BOOTSTRAP], 
     external_scripts=[{
         'src':'https://kit.fontawesome.com/12a2550f5c.js',
         'crossorigin': 'anonymous'

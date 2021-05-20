@@ -3,7 +3,7 @@ import dash
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ALL
 import dash_table as dasht
 import pandas as pd
 import models
@@ -12,6 +12,9 @@ import plotly.express as px
 import utils
 from sqlalchemy import func, or_
 from dateutil.relativedelta import *
+from plotly import graph_objs as go
+from plotly.subplots import make_subplots
+import numpy as np
 
 from app import app
 
@@ -106,9 +109,22 @@ hbar_chart = dbc.Card([
             )
         )
     ])
+], className='mb-2')
+
+cal_chart = dbc.Card([
+    dbc.CardHeader('Calendar'),
+    dbc.CardBody([
+        dcc.Loading(
+            id='loading-4',
+            children=dcc.Graph(
+                id='inv-cal-chrt',
+                config={
+                    'displayModeBar': False
+                }
+            )
+        )
+    ])
 ])
-
-
 
 
 layout = html.Div([
@@ -119,7 +135,7 @@ layout = html.Div([
                 options=[{'label': i[1], 'value': i[0]} for i in product_values],
                 placeholder='Select Product...'
             )
-        ], md=6, lg=5, className='mb-2'),
+        ], md=6, lg=4, className='mb-2'),
         dbc.Col([
             dbc.InputGroup([
                 dcc.DatePickerSingle(
@@ -142,7 +158,8 @@ layout = html.Div([
         dbc.Col([line_chart], sm=12, md=8, lg=9),
     ], className='mb-2', align='center'),
     dbc.Row([
-        dbc.Col([hbar_chart], sm=12, md=6, lg=6),
+        dbc.Col([hbar_chart], sm=12, md=12, lg=4),
+        dbc.Col([cal_chart], sm=12, md=12, lg=8)
     ])], style={'display': 'none'})
 ])
 
@@ -153,7 +170,8 @@ layout = html.Div([
      Output(component_id='ytd-inv', component_property='children'),
      Output(component_id='tot-inv-title', component_property='children')],
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value')]
+     Input(component_id='prod-select', component_property='value')],
+     prevent_initial_call=True
 )
 def update_page(date, product):
 
@@ -213,7 +231,8 @@ def update_page(date, product):
 @app.callback(
     Output(component_id='yoy-var-inv', component_property='children'),
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value')]
+     Input(component_id='prod-select', component_property='value')],
+     prevent_initial_call=True
 )
 def update_page(date, product):
     
@@ -266,7 +285,8 @@ def update_page(date, product):
      Input(component_id='line-chrt-btn-1', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-2', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-3', component_property='n_clicks'),
-     Input(component_id='line-chrt-btn-4', component_property='n_clicks')]
+     Input(component_id='line-chrt-btn-4', component_property='n_clicks')],
+     prevent_initial_call=True
 )
 def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
 
@@ -339,7 +359,8 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
 @app.callback(
     Output(component_id='inv-hbar-chrt', component_property='children'),
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value')]
+     Input(component_id='prod-select', component_property='value')],
+     prevent_initial_call=True
 )
 def update_hbar_chrt(date, product):
 
@@ -390,8 +411,118 @@ def update_hbar_chrt(date, product):
 
 
 @app.callback(
+    Output(component_id='inv-cal-chrt', component_property='figure'),
+    [Input(component_id='dt-picker', component_property='date'),
+     Input(component_id='prod-select', component_property='value')],
+     prevent_initial_call=True
+)
+def update_page(date, product):
+
+
+    def build_subplot(df, year, fig, row):
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        month_days =   [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        month_positions = (np.cumsum(month_days) - 15)/7
+
+        d1 = dt.date(year, 1, 1)
+        d2 = dt.date(year, 12, 31)
+
+        delta = d2 - d1
+
+        dates_in_year = [d1 + dt.timedelta(i) for i in range(delta.days+1)]
+
+        all_dates_df = pd.DataFrame(dates_in_year, columns=['date'])
+        merge = pd.merge(all_dates_df, df, how='left', on='date')
+        weekdays_in_year = [i.weekday() for i in dates_in_year]
+        weeknumber_of_dates = [int(i.strftime("%V")) if not (int(i.strftime("%V")) == 1 and i.month == 12) else 53
+                            for i in dates_in_year]
+
+        text = [str(i) for i in dates_in_year]
+        colorscale=[[False, '#eeeeee'], [True, '#2626d9']]
+
+        if merge['quantity'].sum() == 0:
+            colorscale=[[False, '#eeeeee'], [True, '#eeeeee']]
+        
+        z = merge['quantity'].fillna(0).to_list()
+
+        data = [
+            go.Heatmap(
+                x = weeknumber_of_dates,
+                y = weekdays_in_year,
+                z = z,
+                text=text,
+                hoverinfo='text',
+                xgap=3,
+                ygap=3,
+                showscale=False,
+                colorscale=colorscale
+            )
+        ]
+
+        layout = go.Layout(
+            height=200,
+            yaxis={
+                'tickmode': 'array',
+                'ticktext': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                'tickvals': [0,1,2,3,4,5,6],
+                'autorange': 'reversed'
+            },
+            xaxis={
+                'tickmode': 'array',
+                'ticktext': month_names,
+                'tickvals': month_positions
+            },
+            plot_bgcolor=('#fff'),
+            margin={'l':0, 'r':0, 't':20.5, 'b':0},
+            showlegend=False
+        )
+
+        fig.add_traces(data, rows=[row+1], cols=[1])
+        fig.update_layout(layout)
+        fig.update_xaxes(layout['xaxis'])
+        fig.update_yaxes(layout['yaxis'])
+
+        return fig
+
+
+
+
+
+    curr_yr = dt.datetime.strptime(date, '%Y-%m-%d').year
+    prev_yr = curr_yr - 1
+
+    query = models.session.query(
+                    models.Bourbon.insert_date.label('date'),
+                    func.sum(models.Bourbon.quantity).label('quantity'),
+                    models.Bourbon.year.label('year')
+                ) \
+                .group_by(models.Bourbon.insert_date) \
+                .filter(
+                    models.Bourbon.year >= prev_yr,
+                    models.Bourbon.insert_date >= '2020-03-01',
+                    models.Bourbon.productid == product
+                )
+
+    df = pd.read_sql(query.statement, models.session.bind)
+    models.session.close()
+
+    fig = make_subplots(rows=2, cols=1, subplot_titles=[prev_yr, curr_yr])
+    for i, year in enumerate([prev_yr, curr_yr]):
+        data=df[df['year'] == year]
+        build_subplot(data, year, fig, row=i)
+        fig.update_layout(height=395)
+    
+    return fig
+
+
+
+
+
+
+@app.callback(
     [Output(f"line-chrt-btn-{i}", "active") for i in range(1,5)],
     [Input("line-chrt-btn-value", "children")],
+    prevent_initial_call=True
 )
 def set_active_button(button_id):
 
@@ -403,11 +534,12 @@ def set_active_button(button_id):
 
 @app.callback(
     [Output('prod-select', 'style'),
-     Output('analytics_app_page','style')],
+     Output('analytics_app_page', 'style')],
     Input('prod-select', 'value')
 )
 def empty_chart(product):
+
     if product is None:
-        return {'border':'1px solid rgba(205,2,0,0.9)', 'border-radius':'4px'}, {'display': 'none'}
+        return {'border':'1px solid #f44336'}, {'display': 'none'}
     else:
         return {}, {'display':'block'}

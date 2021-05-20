@@ -8,6 +8,22 @@ body {
     background-color: #F2F2F2;
 }
 
+.header {
+    margin: 0;
+    color: #606060;
+}
+
+.sub-header {
+    color: #606060;
+}
+
+.MuiSnackbarContent-root {
+    color: #fff !important;
+    font-weight: 500 !important;
+    background-color: #2196f3 !important;
+    font-size: 1rem !important;
+}
+
 #quantity-tbl-div {
     overflow-y: auto;
     max-height: 43rem;

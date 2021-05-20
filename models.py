@@ -1,6 +1,6 @@
 from db_conn import engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, DECIMAL, Date, ForeignKey, select, cast, func
+from sqlalchemy import Column, String, Integer, DECIMAL, Date, ForeignKey, select, cast, func, extract
 from sqlalchemy.orm import sessionmaker, column_property, relationship
 
 Base = declarative_base()
@@ -21,6 +21,7 @@ class Bourbon(Base):
     phone_number = Column(String)
     insert_dt = Column(Date)
     insert_date = column_property(cast(insert_dt, Date))
+    year = column_property(extract('year', insert_dt))
 
 
 class Bourbon_desc(Base):

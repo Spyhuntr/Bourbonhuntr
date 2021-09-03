@@ -131,7 +131,7 @@ layout = html.Div([
     dbc.Row([
         dbc.Col([
             dcc.Dropdown(
-                id="prod-select",
+                id="analysis-prod-select",
                 options=[{'label': i[1], 'value': i[0]} for i in product_values],
                 placeholder='Select Product...'
             )
@@ -170,7 +170,7 @@ layout = html.Div([
      Output(component_id='ytd-inv', component_property='children'),
      Output(component_id='tot-inv-title', component_property='children')],
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value')],
+     Input(component_id='analysis-prod-select', component_property='value')],
      prevent_initial_call=True
 )
 def update_page(date, product):
@@ -231,7 +231,7 @@ def update_page(date, product):
 @app.callback(
     Output(component_id='yoy-var-inv', component_property='children'),
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value')],
+     Input(component_id='analysis-prod-select', component_property='value')],
      prevent_initial_call=True
 )
 def update_page(date, product):
@@ -281,7 +281,7 @@ def update_page(date, product):
     [Output(component_id='inv-line-chrt', component_property='figure'),
      Output(component_id='line-chrt-btn-value', component_property='children')],
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value'),
+     Input(component_id='analysis-prod-select', component_property='value'),
      Input(component_id='line-chrt-btn-1', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-2', component_property='n_clicks'),
      Input(component_id='line-chrt-btn-3', component_property='n_clicks'),
@@ -359,7 +359,7 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
 @app.callback(
     Output(component_id='inv-hbar-chrt', component_property='children'),
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value')],
+     Input(component_id='analysis-prod-select', component_property='value')],
      prevent_initial_call=True
 )
 def update_hbar_chrt(date, product):
@@ -413,7 +413,7 @@ def update_hbar_chrt(date, product):
 @app.callback(
     Output(component_id='inv-cal-chrt', component_property='figure'),
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='prod-select', component_property='value')],
+     Input(component_id='analysis-prod-select', component_property='value')],
      prevent_initial_call=True
 )
 def update_page(date, product):
@@ -526,16 +526,16 @@ def update_page(date, product):
 )
 def set_active_button(button_id):
 
-    if button_id in ('', 'prod-select', None):
+    if button_id in ('', 'analysis-prod-select', None):
         return [True, False, False, False]
     else:
         return [button_id == f"line-chrt-btn-{i}" for i in range(1,5)]
 
 
 @app.callback(
-    [Output('prod-select', 'style'),
+    [Output('analysis-prod-select', 'style'),
      Output('analytics_app_page', 'style')],
-    Input('prod-select', 'value')
+    Input('analysis-prod-select', 'value')
 )
 def empty_chart(product):
 

@@ -1,9 +1,9 @@
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
-import dash_table as dasht
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from dash_html_components.Tbody import Tbody
 import pandas as pd
 import models
 import utils
@@ -42,8 +42,6 @@ form = html.Div(id='form-cntrl-div',
         ])
 
 
-quantity_tbl = html.Div(id='quantity-tbl-div')
-
 layout = html.Div([
     dbc.Row([
         html.H3(id='summary-title', className='header')
@@ -59,8 +57,8 @@ layout = html.Div([
     dbc.Row([
         dbc.Col([
             dcc.Loading(
-                id='loading-output-1',
-                children=quantity_tbl
+                id='loader',
+                children=[html.Div(id='quantity-tbl-div')]
             )], lg=10)
     ], justify='center'),
 
@@ -110,6 +108,10 @@ def update_page(input_product, input_store):
     
     table_header = [html.Thead(html.Tr(hdr_list))]
 
+    if df.empty:
+        nodata= [html.Tbody('No data found')]
+        return dbc.Table(table_header + nodata, bordered=True, striped=True)
+
     tbody = []
     for data in df.values:
         row_data=[]
@@ -117,16 +119,18 @@ def update_page(input_product, input_store):
             if ind == 1:
                 row_data.append(
                     html.Td(
-                        html.A(i, href='https://maps.google.com/?q={}'.format(i), target='_blank')
+                        html.A(i, href=f'https://maps.google.com/?q={i}', target='_blank')
                     )
                 )
             else:
                 row_data.append(html.Td(i))
+
                 
         tbody.append(html.Tr(row_data))
     table_body = [html.Tbody(tbody)]
 
     dash_tbl = dbc.Table(table_header + table_body, bordered=True, striped=True)
+
     return dash_tbl
 
 @app.callback(

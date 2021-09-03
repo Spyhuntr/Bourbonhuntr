@@ -2,7 +2,8 @@ import dash
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
+from sd_material_ui import Drawer
+from dash.dependencies import Input, Output, State
 import os
 
 from app import app
@@ -33,42 +34,48 @@ navbar = dbc.Row([
     ], className='navbar', align='center')
 
 
-left_menu = html.Div([
+left_menu = Drawer(
+    id='left-side-menu',
+    className='drawer',
+    children=[
     html.Div([
         html.Img(src=os.path.join(cwd_path, '/assets/bourbon-nav-img.jpg'), style={'max-width':'100%'})
-    ], className='leftbar-img'),
+    ]),
     html.Ul([
-        html.Li('Pages', className='side-nav-title side-nav-item'),
+        html.Li('Pages', className='drawer-title'),
+
         dcc.Link([
             html.Li([
-                html.I(id='daily_inv_icon', className='fas fa-home'), 
+                html.I(className='fas fa-home'), 
                 html.Span('Daily Inventory') 
             ], id='daily_inv_link', className='side-nav-link')
         ], href='/', refresh=True),
+
         dcc.Link([
             html.Li([
-                html.I(id='anala_icon', className='fas fa-chart-bar'), 
+                html.I(className='fas fa-chart-bar'), 
                 html.Span('Analytics') 
             ], id='anala_link', className='side-nav-link')
         ], href='/analytics_app', refresh=True),
-        html.Li([
-            html.I(id='map_icon', className='fas fa-map'), 
-            html.Span('Maps...'),
-            html.Ul([
-                dcc.Link([
-                    html.Li([
-                        html.Span('Current Inventory') 
-                    ], id='map_ci_link', className = 'side-sub-link')
-                ], href='/map_app', refresh=True),
-                dcc.Link([
-                    html.Li([
-                        html.Span('Distribution Over Time') 
-                    ], id='distro_link', className = 'side-sub-link')
-                ], href='/distro_app', refresh=True)
-            ], id='map_sub_menu', className='map-sub-menu') 
-        ], id='maps_link', className='side-nav-link side-sub-menu-hdr')
-    ], className='side-nav', style={'padding': '0'})
-], id='left-side-menu', className="left-side-menu")
+
+        html.Li([html.Span('Maps')], className='side-nav-link'),
+
+        dcc.Link([
+            html.Li([
+                html.I(className='fas fa-map'), 
+                html.Span('Current Inventory') 
+            ], id='map_ci_link', className='side-nav-link side-nav-sub')
+        ], href='/map_app', refresh=True),
+
+        dcc.Link([
+            html.Li([
+                html.I(className='fas fa-map-marker'), 
+                html.Span('Distribution Over Time') 
+            ], id='distro_link', className='side-nav-link side-nav-sub')
+        ], href='/distro_app', refresh=True),
+
+    ], className='side-nav')
+])
 
 
 def serve_layout():
@@ -83,7 +90,7 @@ def serve_layout():
                 ], lg=12)
             ])
         ], fluid=True),
-        html.Div(id='overlay')
+        html.Div(id='backdrop')
 ])
 
 app.layout = serve_layout
@@ -104,31 +111,26 @@ def display_page(pathname):
 
 
 @app.callback(
-    [Output('left-side-menu', 'style'),
-     Output('overlay', 'style')],
-    [Input('menu-button', 'n_clicks'),
-     Input('overlay', 'n_clicks'),
-     Input('daily_inv_link', 'n_clicks'),
-     Input('anala_link', 'n_clicks'),
-     Input('map_ci_link', 'n_clicks')])
-def disp_menu(n1, n2, n3, n4, n5):
+    [Output('left-side-menu', 'open'), Output('backdrop', 'style')],
+    [Input('menu-button', 'n_clicks'), Input('backdrop', 'n_clicks')])
+def disp_menu(n1, n2):
     ctx = dash.callback_context
 
     clicked = ctx.triggered[0]['prop_id'].split('.')[0]
 
     turn_on = [
-        {'margin-left':'0px'},
-        {'display':'inline-block'}
+        True,
+        {'visibility': 'visible'}
     ]
 
     turn_off = [
-        {'margin-left':'-260px'},
-        {'display':'none'}
+        False,
+        {'visibility': 'hidden'}
     ]
-        
+
     if clicked == 'menu-button':
         return turn_on
-    elif clicked == 'overlay':
+    elif clicked == 'backdrop':
         return turn_off
     else:
         return turn_off

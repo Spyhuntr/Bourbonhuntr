@@ -3,7 +3,7 @@ import dash
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State, ALL
+from dash.dependencies import Input, Output, ALL
 import dash_table as dasht
 import pandas as pd
 import models
@@ -139,10 +139,7 @@ layout = html.Div([
         dbc.Col([
             dbc.InputGroup([
                 dcc.DatePickerSingle(
-                    id='dt-picker', 
-                    date=utils.get_run_dt(),
-                    min_date_allowed=utils.min_data_date(),
-                    max_date_allowed=utils.get_run_dt()
+                    id='dt-picker'
                 ),
                 dbc.InputGroupAddon(
                     html.I(id='calendar-icon', className='fas fa-calendar-alt fa-md'), 
@@ -162,6 +159,17 @@ layout = html.Div([
         dbc.Col([cal_chart], sm=12, md=12, lg=8)
     ])], style={'display': 'none'})
 ])
+
+
+@app.callback(
+    [Output(component_id='dt-picker', component_property='date'),
+     Output(component_id='dt-picker', component_property='min_date_allowed'),
+     Output(component_id='dt-picker', component_property='max_date_allowed')],
+    Input(component_id='url', component_property='pathname')
+)
+def updt_controls(url):
+
+    return utils.get_run_dt(), utils.min_data_date(), utils.get_run_dt()
 
 
 @app.callback(
@@ -273,8 +281,6 @@ def update_page(date, product):
 
 
     return [f'{abs(yoy_var):,.1f}%', arrow]
-
-
 
 
 @app.callback(
@@ -513,10 +519,6 @@ def update_page(date, product):
         fig.update_layout(height=395)
     
     return fig
-
-
-
-
 
 
 @app.callback(

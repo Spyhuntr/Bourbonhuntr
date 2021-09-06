@@ -132,14 +132,18 @@ def update_page(input_product, input_store):
     return dash_tbl
 
 @app.callback(
-    Output(component_id="snackbar", component_property='open'),
+    [Output(component_id="snackbar", component_property='open'),
+     Output(component_id="snackbar", component_property='message')],
     [Input(component_id='url', component_property='pathname')],
 )
 def toggle_modal(url):
 
-    if not utils.is_data_loading():
-        return True
+    text = 'Heads up! The database has not finished updating for '
 
+    if not utils.is_data_loading():
+        return [True, f'{text}{utils.now().strftime("%m-%d-%Y")}.']
+    else:
+        return [None, None]
 
 @app.callback(
     Output(component_id="summary-title", component_property='children'),

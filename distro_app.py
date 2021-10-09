@@ -1,12 +1,8 @@
 
-import dash
-import dash_html_components as html
-import dash_core_components as dcc
+from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 import pandas as pd
 import models
-import datetime as dt
 import plotly.express as px
 import os
 from sqlalchemy import cast, Date, func
@@ -32,7 +28,7 @@ form = html.Div(id='form-cntrl-div',
                         placeholder='Select Products...'
                     )
                 ], lg=4)
-            ], form=True, className='mb-2')
+            ], className='mb-2')
         ])
 
 distro_map = html.Div(

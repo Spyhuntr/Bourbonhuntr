@@ -1,7 +1,5 @@
-import dash_html_components as html
-import dash_core_components as dcc
+from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
 import pandas as pd
 import models
 import utils
@@ -42,13 +40,13 @@ form = html.Div(id='form-cntrl-div',
 
 layout = html.Div([
     dbc.Row([
-        html.H3(id='summary-title', className='header')
-    ], no_gutters=True, justify='center'),
+        html.H3(id='summary-title', className='header g-0')
+    ], style={'text-align': 'center'}),
     dbc.Row([
         html.P("""This site tracks bourbon inventory in Virginia and the dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
                 If you wish to know if a product is currently available, please go to the VA ABC site.""", 
-                className='sub-header')
-    ], no_gutters=True, justify='center', style={'text-align': 'center'}),
+                className='sub-header g-0')
+    ], style={'text-align': 'center'}),
     dbc.Row([
         dbc.Col([form], sm=12, lg=12)
     ]),
@@ -57,7 +55,7 @@ layout = html.Div([
             dcc.Loading(
                 id='loader',
                 children=[html.Div(id='quantity-tbl-div')]
-            )], lg=10)
+            )], lg=9)
     ], justify='center'),
 
     mui.Snackbar(
@@ -151,4 +149,4 @@ def toggle_modal(url):
 )
 def title_date(url):
 
-    return "Welcome to the Bourbonhuntr! Below is the inventory for {}.".format(utils.get_run_dt().strftime('%m-%d-%Y'))
+    return "Welcome to the Bourbonhuntr! Inventory for {}.".format(utils.get_run_dt().strftime('%m-%d-%Y'))

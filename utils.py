@@ -1,5 +1,4 @@
 import datetime as dt
-import time
 import models
 import pandas as pd
 from sqlalchemy import func
@@ -64,5 +63,16 @@ no_data_figure = {
                         }
                     }
                 ],
+            'height': 30}
+        }
+
+default_figure = {
+            "layout": {
+                "xaxis": {
+                    "visible": False
+                },
+                "yaxis": {
+                    "visible": False
+                },
             'height': 30}
         }

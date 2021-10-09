@@ -1,9 +1,7 @@
-import dash
-import dash_html_components as html
-import dash_core_components as dcc
+
+from dash import html, dcc, Input, Output, callback_context
 import dash_bootstrap_components as dbc
 from sd_material_ui import Drawer
-from dash.dependencies import Input, Output, State
 import os
 
 from app import app
@@ -16,11 +14,17 @@ cwd_path = os.path.dirname(__file__)
 #begin layout section
 icon_set = dbc.Col([
             html.A(
+                children=html.I(id='dwnload-prd-list', className='fas fa-download fa-lg'),
+                className='me-3',
+                style={'cursor': 'pointer'}
+            ),
+            dcc.Download(id="download-product-csv"),
+            html.A(
                 href="https://abc.virginia.gov",
                 children=html.I(id='more-sites', className='fas fa-store fa-lg fa-fw'),
                 target="_blank"
             )
-        ], width=1)
+        ], width=2, md=1, lg=1, class_name='g-0')
 
 navbar = dbc.Row([
         dbc.Col(
@@ -29,9 +33,9 @@ navbar = dbc.Row([
         dbc.Col(
             html.Div(
                 html.Img(src=os.path.join(cwd_path, '/assets/TheBourbonHuntr_Logo_v1.png'), height='50px')
-            ), className='navbar-title'),
+            ), className='navbar-title g-0'),
         icon_set
-    ], className='navbar', align='center')
+    ], className='navbar', justify='between')
 
 
 left_menu = Drawer(
@@ -90,7 +94,8 @@ def serve_layout():
                 ], lg=12)
             ])
         ], fluid=True),
-        html.Div(id='backdrop')
+        html.Div(id='backdrop'),
+        html.Div(id='dummy')
 ])
 
 app.layout = serve_layout
@@ -114,7 +119,7 @@ def display_page(pathname):
     [Output('left-side-menu', 'open'), Output('backdrop', 'style')],
     [Input('menu-button', 'n_clicks'), Input('backdrop', 'n_clicks')])
 def disp_menu(n1, n2):
-    ctx = dash.callback_context
+    ctx = callback_context
 
     clicked = ctx.triggered[0]['prop_id'].split('.')[0]
 
@@ -134,6 +139,15 @@ def disp_menu(n1, n2):
         return turn_off
     else:
         return turn_off
+
+@app.callback(
+    Output('download-product-csv', 'data'),
+    Input('dwnload-prd-list', 'n_clicks'),
+    prevent_initial_call=True,
+)
+def download_products(n1):
+
+    return dcc.send_data_frame(summary_app.df_products.to_csv, "products.csv")
 
 
 

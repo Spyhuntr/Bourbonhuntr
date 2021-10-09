@@ -1,10 +1,7 @@
 
-import dash
-import dash_html_components as html
-import dash_core_components as dcc
+from dash import html, dcc, Input, Output, callback_context
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, ALL
-import dash_table as dasht
+from dash import dash_table as dasht
 import pandas as pd
 import models
 import datetime as dt
@@ -39,7 +36,7 @@ inv_total_widget = dbc.Card([
                                 'staticPlot':True
                             },
                         responsive=True,
-                        style={'height':60, 'margin':'-1.25rem'})
+                        style={'height':60, 'margin':'-1rem'})
                     ])
                 ])
             ]
@@ -138,15 +135,11 @@ layout = html.Div([
         ], md=6, lg=4, className='mb-2'),
         dbc.Col([
             dbc.InputGroup([
-                dcc.DatePickerSingle(
-                    id='dt-picker'
-                ),
-                dbc.InputGroupAddon(
-                    html.I(id='calendar-icon', className='fas fa-calendar-alt fa-md'), 
-                    addon_type="append",
-                    style={'padding':'0.6rem 0.5rem 0 0.5rem'},
-                    className='btn-primary'),
-            ])
+                dcc.DatePickerSingle(id='dt-picker'),
+                dbc.InputGroupText(
+                    html.I(id='calendar-icon', className='fas fa-calendar-alt fa-md')
+                )],
+            )
         ], className='col-auto mb-2')
     ], justify='end'),
     html.Div(id='analytics_app_page', children=[
@@ -157,7 +150,7 @@ layout = html.Div([
     dbc.Row([
         dbc.Col([hbar_chart], sm=12, md=12, lg=4),
         dbc.Col([cal_chart], sm=12, md=12, lg=8)
-    ])], style={'display': 'none'})
+    ])])
 ])
 
 
@@ -165,10 +158,10 @@ layout = html.Div([
     [Output(component_id='dt-picker', component_property='date'),
      Output(component_id='dt-picker', component_property='min_date_allowed'),
      Output(component_id='dt-picker', component_property='max_date_allowed')],
-    Input(component_id='url', component_property='pathname')
+     Input(component_id='url', component_property='pathname')
 )
 def updt_controls(url):
-
+    
     return utils.get_run_dt(), utils.min_data_date(), utils.get_run_dt()
 
 
@@ -178,10 +171,13 @@ def updt_controls(url):
      Output(component_id='ytd-inv', component_property='children'),
      Output(component_id='tot-inv-title', component_property='children')],
     [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='analysis-prod-select', component_property='value')],
-     prevent_initial_call=True
+     Input(component_id='analysis-prod-select', component_property='value')]
 )
 def update_page(date, product):
+
+    if product is None:
+        return ['', utils.default_figure, '', '']
+        
 
     today = dt.datetime.strptime(date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
@@ -244,6 +240,9 @@ def update_page(date, product):
 )
 def update_page(date, product):
     
+    if product is None:
+        return ''
+
     today = dt.datetime.strptime(date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
     same_day_last_year = today.replace(today.year - 1)
@@ -296,7 +295,10 @@ def update_page(date, product):
 )
 def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
 
-    ctx = dash.callback_context
+    if product is None:
+        return [utils.default_figure, '']
+
+    ctx = callback_context
 
     if ctx.triggered[0]['prop_id'].split('.')[0] == 'dt-picker':
         button_id = None
@@ -356,7 +358,7 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
     line_fig.update_traces(
         hovertemplate=
             "<span class='card-header'><b>%{x}</b></span><br>" +
-            "Quantity: %{y:,.0}<br>"
+            "Quantity: %{y}<br>"
     )
 
     return line_fig, button_id
@@ -370,9 +372,11 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
 )
 def update_hbar_chrt(date, product):
 
+    if product is None:
+        return ''
+
     today = dt.datetime.strptime(date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
-    thirtydaysago = today - dt.timedelta(30)
 
     query = models.session.query(
                     models.Bourbon.storeid.label('storeid'),
@@ -424,6 +428,8 @@ def update_hbar_chrt(date, product):
 )
 def update_page(date, product):
 
+    if product is None:
+        return utils.default_figure
 
     def build_subplot(df, year, fig, row):
         month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -457,11 +463,11 @@ def update_page(date, product):
                 y = weekdays_in_year,
                 z = z,
                 text=text,
-                hoverinfo='text',
                 xgap=3,
                 ygap=3,
                 showscale=False,
-                colorscale=colorscale
+                colorscale=colorscale,
+                hovertemplate = 'Date: %{text}<br>Quantity: %{z}<extra></extra>',
             )
         ]
 
@@ -480,7 +486,7 @@ def update_page(date, product):
             },
             plot_bgcolor=('#fff'),
             margin={'l':0, 'r':0, 't':20.5, 'b':0},
-            showlegend=False
+            showlegend=False,
         )
 
         fig.add_traces(data, rows=[row+1], cols=[1])
@@ -535,13 +541,12 @@ def set_active_button(button_id):
 
 
 @app.callback(
-    [Output('analysis-prod-select', 'style'),
-     Output('analytics_app_page', 'style')],
+    Output('analysis-prod-select', 'style'),
     Input('analysis-prod-select', 'value')
 )
 def empty_chart(product):
 
     if product is None:
-        return {'border':'1px solid #f44336'}, {'display': 'none'}
+        return {'border':'1px solid #f44336'}
     else:
-        return {}, {'display':'block'}
+        return {}

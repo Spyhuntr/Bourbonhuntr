@@ -1,13 +1,8 @@
 
-import dash
-import dash_html_components as html
-import dash_core_components as dcc
-import dash_table
+from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 import pandas as pd
 import models
-import datetime as dt
 import plotly.graph_objs as go
 import os
 import utils
@@ -34,7 +29,7 @@ form = html.Div(id='form-cntrl-div',
                         placeholder='Select Products...'
                     )
                 ], lg=4)
-            ], form=True, className='mb-2')
+            ], className='mb-2')
         ])
 
 quantity_map = html.Div(

@@ -182,3 +182,64 @@ thead th {
     border-color: #e2e2e2;
     box-shadow: 0px 0px 0px rgb(0 0 0 / 0%);
 }
+
+
+.map-input {
+    box-shadow: 0 0 2px rgb(0 0 0 / 20%), 0 -1px 0 rgb(0 0 0 / 2%);
+    border-radius: 8px 8px 0 0;
+}
+
+.map-tooltip {
+    font-size: 16px;
+}
+
+#slider_container > div {
+    padding: 0 !important;
+}
+
+.rc-slider-rail {
+    background-color: #eee;
+}
+
+.rc-slider-dot {
+    width: 14px;
+    height: 14px;
+    bottom: -5px;
+}
+
+.rc-slider-dot:not(:last-child):not(:first-child) {
+    display: none;
+}
+
+.rc-slider-handle {
+    width: 20px;
+    height: 20px;
+    transform: translate(-43%, -16%) !important;
+} 
+
+
+.distro-map {
+    position: absolute;
+    top: 61px;
+    height: 93vh;
+    width: 100%;
+}
+
+.distro-map-form {
+    z-index: 1;
+}
+
+@media (min-width: 375px) {
+    .distro-map-form {
+        z-index: 1;
+        position: relative;
+        left: 0px;
+    }
+}
+
+@media (min-width: 376px) {
+    .distro-map-form {
+        z-index: 1;
+        left: 60px;
+    }
+}

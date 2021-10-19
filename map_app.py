@@ -1,11 +1,11 @@
-
 from dash import html, dcc, Input, Output
+from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import pandas as pd
 import models
-import plotly.graph_objs as go
 import os
 import utils
+import dash_leaflet as dl
 from sqlalchemy import cast, Date, func
 
 from app import app
@@ -18,6 +18,7 @@ models.session.close()
 
 product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['description'])]
 
+
 #form controls
 form = html.Div(id='form-cntrl-div', 
             children = [
@@ -26,85 +27,94 @@ form = html.Div(id='form-cntrl-div',
                     dcc.Dropdown(
                         id="prod-select",
                         options=[{'label': i[1], 'value': i[0]} for i in product_values],
-                        placeholder='Select Products...'
-                    )
+                        placeholder='Select Products...',
+                        className='map-input'
+                    ),
                 ], lg=4)
             ], className='mb-2')
         ])
 
+mapbox_url = "https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{{z}}/{{x}}/{{y}}{{r}}?access_token={access_token}"
+
 quantity_map = html.Div(
-    id='map-div',
-    children=[ 
-        dcc.Graph(
-            id='quantity-map', style={'height':'87vh'}
+    children=[
+        dl.Map(id='quantity-map',
+               center=[37.95, -79.25],
+               zoom=8.3,
+               children=[
+                    dl.TileLayer(url=mapbox_url.format(
+                        id="light-v9", access_token=mapbox_access_token)
+                    ),
+                    dl.LocateControl(options={'locateOptions': {'enableHighAccuracy': True}}),
+                    dl.LayerGroup(id="icon_layer")
+                ]
         )
-    ]
+    ], style={'position': 'absolute', 'top': '61px', 'height': '93vh', 'width': '100%'}
 )
 
 layout = html.Div([
+    dcc.Store(id='map_app_store', storage_type='session'),
     dbc.Row([
-        dbc.Col([form], sm=12, lg=12),
-        dbc.Col([quantity_map], lg=12)
+        dbc.Col([form], style={'zIndex': 1, 'position': 'absolute', 'left': '60px'}, sm=6, lg=8),
+        dbc.Col([quantity_map], style={'zIndex': 0, 'padding': 0}, lg=12),
+        dbc.Row([
+            dbc.Col(html.H1(id='error_msg', children='Please select a product'), width=12, style={'textAlign': 'center'})
+            ], justify="center", className="position-absolute top-50")
     ])
 ])
 
 
 
-@app.callback(
-    Output(component_id='quantity-map', component_property='figure'),
-    [Input(component_id='url', component_property='pathname'),
-     Input(component_id='prod-select', component_property='value')]
-)
-def update_map_page(path, input_product):
 
+@app.callback(
+    Output('map_app_store', 'data'),
+    [Input('url', 'pathname')]
+)
+def load_data(path):
     map_q = models.session.query(
                     models.Bourbon.longitude, 
                     models.Bourbon.latitude, 
-                    func.Concat(models.Bourbon_stores.store_addr_2, ' ', models.Bourbon_stores.store_city).label('store_addr_disp')
+                    models.Bourbon.productid,
+                    func.Concat(models.Bourbon_stores.store_addr_2, ' ', models.Bourbon_stores.store_city).label('store_addr_disp'),
+                    func.sum(models.Bourbon.quantity).label('quantity')
                 ) \
                .join(models.Bourbon_stores) \
+               .group_by(models.Bourbon.productid, models.Bourbon_stores.store_addr_2) \
                .filter(
                    cast(models.Bourbon.insert_dt, Date) == utils.get_run_dt(),
                    
                 )
 
-    if input_product:
-        map_q = map_q.filter(models.Bourbon.productid == input_product)
-
-    df = pd.read_sql(map_q.statement, models.session.bind)
+    df = pd.read_sql(map_q.statement, models.session.bind, columns=['latitude, longitude, store_addr_disp', 'quantity'])
     models.session.close()
 
-    map_fig = go.Figure(go.Scattermapbox(
-        lat=df['latitude'], 
-        lon=df['longitude'],
-        mode='markers',
-        text=df['store_addr_disp'],
-        marker={
-            'size': 15
-        },
-        hovertemplate =
-            "%{text}<extra></extra>"
-    ))
+    return df.to_dict('records')
 
-    map_fig.update_layout(
-        autosize=True, 
-        hovermode='closest',
-        margin = {
-            'l':0,'r':0,'t':0,'b':0
-        },
-        mapbox = {
-            'accesstoken': mapbox_access_token,
-            'style': 'light',
-            'center': {
-                'lat': 37.95,
-                'lon': -79.25
-            },
-            'zoom': 7.3
-        },
-        hoverlabel={
-            'bgcolor':'white',
-            'font_size':16,
-            'font_family':'Lato'
-        })
 
-    return map_fig
+@app.callback(
+    [Output('icon_layer', 'children'),
+    Output('error_msg', 'children')],
+    [Input('map_app_store', 'data'),
+     Input('prod-select', 'value')]
+)
+def update_map_page(store, input_product):
+
+    if input_product is None:
+        raise PreventUpdate
+
+    map = []
+    
+    fltred_store = [x for x in store if x['productid'] == input_product]
+
+    map = [dl.Marker(position=[row['latitude'], row['longitude']],
+            children=[
+                dl.Tooltip([
+                    html.Div(f'Address: {row["store_addr_disp"]}'),
+                    html.Div(f'Quantity: {int(row["quantity"])}')
+                ])
+            ]) for row in fltred_store]
+
+    if len(map):
+        return [map, '']
+    else:
+        return [map, 'No Data Found']

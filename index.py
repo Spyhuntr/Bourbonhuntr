@@ -15,25 +15,25 @@ cwd_path = os.path.dirname(__file__)
 icon_set = dbc.Col([
             html.A(
                 children=html.I(id='dwnload-prd-list', className='fas fa-download fa-lg'),
-                className='me-3',
+                className='me-1',
                 style={'cursor': 'pointer'}
             ),
             dcc.Download(id="download-product-csv"),
             html.A(
                 href="https://abc.virginia.gov",
-                children=html.I(id='more-sites', className='fas fa-store fa-lg fa-fw'),
+                children=html.I(id='more-sites', className='fas fa-store fa-lg'),
                 target="_blank"
             )
         ], width=2, md=1, lg=1, class_name='g-0')
 
 navbar = dbc.Row([
         dbc.Col(
-            html.I(id='menu-button', className='fas fa-bars fa-2x fa-fw'),
+            html.I(id='menu-button', className='fas fa-bars fa-2x'),
         width=1, className='col-sm-auto'),
         dbc.Col(
             html.Div(
-                html.Img(src=os.path.join(cwd_path, '/assets/TheBourbonHuntr_Logo_v1.png'), height='50px')
-            ), className='navbar-title g-0'),
+                html.Img(src=os.path.join(cwd_path, '/assets/TheBourbonHuntr_Logo_v1.png'), height='50px', width='215px')
+            ), className='navbar-title'),
         icon_set
     ], className='navbar', justify='between')
 

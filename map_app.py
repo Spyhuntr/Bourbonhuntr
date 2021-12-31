@@ -20,19 +20,28 @@ product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['d
 
 
 #form controls
-form = html.Div(id='form-cntrl-div', 
-            children = [
-                dbc.Row([
-                dbc.Col([
-                    dcc.Dropdown(
-                        id="prod-select",
-                        options=[{'label': i[1], 'value': i[0]} for i in product_values],
-                        placeholder='Select Products...',
-                        className='map-input'
-                    ),
-                ], lg=4)
-            ], className='mb-2')
-        ])
+form = dbc.Card([
+    dbc.CardBody([
+        html.Div(id='form-cntrl-div',
+                 children=[
+                     dbc.Row([
+                         dbc.Col([
+                             dcc.Dropdown(
+                                 id="prod-select",
+                                 options=[{'label': i[1], 'value': i[0]}
+                                          for i in product_values],
+                                 placeholder='Select Product...',
+                                 className='map-input'
+                             ),
+                         ], sm=12)
+                     ], className='g-1')
+                 ])
+    ])
+], className='map-form')
+
+
+
+
 
 mapbox_url = "https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{{z}}/{{x}}/{{y}}{{r}}?access_token={access_token}"
 
@@ -55,7 +64,7 @@ quantity_map = html.Div(
 layout = html.Div([
     dcc.Store(id='map_app_store', storage_type='session'),
     dbc.Row([
-        dbc.Col([form], style={'zIndex': 1, 'position': 'absolute', 'left': '60px'}, sm=6, lg=8),
+        dbc.Col([form], sm=10, lg=4),
         dbc.Col([quantity_map], style={'zIndex': 0, 'padding': 0}, lg=12),
         dbc.Row([
             dbc.Col(html.H1(id='error_msg', children='Please select a product'), width=12, style={'textAlign': 'center'})

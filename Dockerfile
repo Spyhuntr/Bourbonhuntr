@@ -14,7 +14,4 @@ RUN apt-get update \
 
 EXPOSE 8050
 
-CMD gunicorn index:server \
---bind 0.0.0.0:8050 \
---timeout 120 \
---workers 3
+ENTRYPOINT [ "gunicorn", "--config", "gunicorn_config.py", "index:server" ]

@@ -23,6 +23,9 @@ class Bourbon(Base):
     insert_date = column_property(cast(insert_dt, Date))
     year = column_property(extract('year', insert_dt))
 
+    products = relationship("Bourbon_desc")
+    stores = relationship("Bourbon_stores")
+
 
 class Bourbon_desc(Base):
     __tablename__ = 'bourbon_desc'
@@ -33,8 +36,6 @@ class Bourbon_desc(Base):
     age = Column(String)
     proof = Column(DECIMAL)
     price = Column(DECIMAL)
-
-    products = relationship('Bourbon', back_populates='bourbon_desc', uselist=False)
 
 
 class Bourbon_stores(Base):
@@ -49,11 +50,6 @@ class Bourbon_stores(Base):
     store_state = Column(String)
     store_zip = Column(String)
 
-    stores = relationship('Bourbon', back_populates='bourbon_stores', uselist=False)
-
-
-Bourbon.products = relationship('Bourbon_desc', order_by=Bourbon_desc.productid, back_populates='bourbon')
-Bourbon.stores = relationship('Bourbon_stores', order_by=Bourbon_stores.storeid, back_populates='bourbon')
 
 class ETL_control_status(Base):
     __tablename__ = 'etl_control_status'

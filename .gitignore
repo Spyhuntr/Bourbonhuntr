@@ -2,3 +2,6 @@ __pycache__
 db_conn.py
 mapbox_token
 *.yml
+.env
+.vscode
+deploy.py

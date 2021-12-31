@@ -49,7 +49,7 @@ form = dbc.Card([
                 children=html.Div(id="loading-output1")
                     )
     ])
-], className='distro-map-form')
+], className='map-form')
 
 mapbox_url = "https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{{z}}/{{x}}/{{y}}{{r}}?access_token={access_token}"
 
@@ -71,7 +71,7 @@ distro_map = html.Div(
 layout = html.Div([
     dcc.Store(id='map_distro_store', storage_type='memory'),
     dbc.Row([
-        dbc.Col([form], sm=6, lg=4),
+        dbc.Col([form], sm=10, lg=4),
         dbc.Col([distro_map], style={'zIndex': 0, 'padding': 0}, lg=12),
         dbc.Row([
             dbc.Col(

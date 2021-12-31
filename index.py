@@ -7,6 +7,9 @@ import os
 from app import app
 import summary_app, analytics_app, map_app, distro_app
 
+from environment.settings import APP_HOST, APP_PORT, APP_DEBUG, DEV_TOOLS_PROPS_CHECK
+
+
 server = app.server
 
 cwd_path = os.path.dirname(__file__)
@@ -150,7 +153,11 @@ def download_products(n1):
     return dcc.send_data_frame(summary_app.df_products.to_csv, "products.csv")
 
 
-
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(
+        host=APP_HOST,
+        port=APP_PORT,
+        debug=APP_DEBUG,
+        dev_tools_props_check=DEV_TOOLS_PROPS_CHECK
+    )
 

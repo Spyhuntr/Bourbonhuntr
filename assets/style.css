@@ -225,21 +225,15 @@ thead th {
     width: 100%;
 }
 
-.distro-map-form {
+.map-form {
     z-index: 1;
+    left: 60px;
 }
 
-@media (min-width: 375px) {
-    .distro-map-form {
+@media (max-width: 575px) {
+    .map-form {
         z-index: 1;
         position: relative;
         left: 0px;
-    }
-}
-
-@media (min-width: 376px) {
-    .distro-map-form {
-        z-index: 1;
-        left: 60px;
     }
 }

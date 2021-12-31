@@ -2,7 +2,7 @@
 
 ## This program is designed to track the bourbon inventory across the state of Virginia.
 
-[The Bourbonhuntr](https://app.bourbonhunter.com)
+[The Bourbonhuntr](https://app.bourbonhuntr.com)
 
 ### Libraries Used
 

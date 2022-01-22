@@ -432,22 +432,37 @@ def update_page(date, product):
         return utils.default_figure
 
     def build_subplot(df, year, fig, row):
-        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        month_days =   [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        month_positions = (np.cumsum(month_days) - 15)/7
 
         d1 = dt.date(year, 1, 1)
         d2 = dt.date(year, 12, 31)
 
-        delta = d2 - d1
+        num_of_days = (d2-d1).days + 1
 
-        dates_in_year = [d1 + dt.timedelta(i) for i in range(delta.days+1)]
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        month_days =   [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        
+        if num_of_days == 366:
+            month_days[1] = 29
+        
+        month_positions = (np.cumsum(month_days) - 15)/7
+
+        dates_in_year = [d1 + dt.timedelta(i) for i in range(num_of_days)]
 
         all_dates_df = pd.DataFrame(dates_in_year, columns=['date'])
         merge = pd.merge(all_dates_df, df, how='left', on='date')
         weekdays_in_year = [i.weekday() for i in dates_in_year]
-        weeknumber_of_dates = [int(i.strftime("%V")) if not (int(i.strftime("%V")) == 1 and i.month == 12) else 53
-                            for i in dates_in_year]
+        weeknumber_of_dates = []
+            
+        for i in dates_in_year:
+            inferred_week_no = int(i.strftime("%V"))
+
+            if inferred_week_no >= 52 and i.month == 1:
+                weeknumber_of_dates.append(0)
+            elif inferred_week_no == 1 and i.month == 12:
+                weeknumber_of_dates.append(53)
+            else:
+                weeknumber_of_dates.append(inferred_week_no)
+            
 
         text = [str(i) for i in dates_in_year]
         colorscale=[[False, '#eeeeee'], [True, '#2626d9']]

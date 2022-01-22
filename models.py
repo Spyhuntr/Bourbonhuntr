@@ -1,6 +1,6 @@
 from db_conn import engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, DECIMAL, Date, ForeignKey, select, cast, func, extract
+from sqlalchemy import Column, String, Integer, DECIMAL, Date, ForeignKey, cast, func, extract
 from sqlalchemy.orm import sessionmaker, column_property, relationship
 
 Base = declarative_base()

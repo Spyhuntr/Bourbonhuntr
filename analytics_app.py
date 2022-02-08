@@ -184,12 +184,12 @@ def update_page(date, product):
     thirtydaysago = today - dt.timedelta(30)
 
     query = models.session.query(
-                    models.Bourbon.insert_date.label('insert_date'),
+                    models.Bourbon.insert_dt.label('insert_date'),
                     func.sum(models.Bourbon.quantity).label('quantity')
                 ) \
-                .group_by(models.Bourbon.insert_date) \
+                .group_by(models.Bourbon.insert_dt) \
                 .filter(
-                    models.Bourbon.insert_date.between(start_of_year, date),
+                    models.Bourbon.insert_dt.between(start_of_year, date),
                     models.Bourbon.productid == product
                 )
 
@@ -249,14 +249,14 @@ def update_page(date, product):
     start_of_prev_year = today.replace(today.year - 1, month=1, day=1)
 
     query = models.session.query(
-                    models.Bourbon.insert_date.label('insert_date'),
+                    models.Bourbon.insert_dt.label('insert_date'),
                     func.sum(models.Bourbon.quantity).label('quantity')
                 ) \
-                .group_by(models.Bourbon.insert_date) \
+                .group_by(models.Bourbon.insert_dt) \
                 .filter(
-                    or_(models.Bourbon.insert_date.between(start_of_year, date), \
-                        models.Bourbon.insert_date.between(start_of_prev_year, same_day_last_year)),
-                    models.Bourbon.insert_date >= '2020-03-01',
+                    or_(models.Bourbon.insert_dt.between(start_of_year, date), \
+                        models.Bourbon.insert_dt.between(start_of_prev_year, same_day_last_year)),
+                    models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == product
                 )
 
@@ -312,24 +312,24 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
     twelvemonth = date_param - relativedelta(months=12)
 
     query = models.session.query(
-                    models.Bourbon.insert_date.label('insert_date'),
+                    models.Bourbon.insert_dt.label('insert_date'),
                     func.sum(models.Bourbon.quantity).label('quantity')
                 ) \
-                .group_by(models.Bourbon.insert_date) \
+                .group_by(models.Bourbon.insert_dt) \
                 .filter(
-                    models.Bourbon.insert_date.between(twelvemonth, date_param),
-                    models.Bourbon.insert_date >= '2020-03-01',
+                    models.Bourbon.insert_dt.between(twelvemonth, date_param),
+                    models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == product
                 )
 
     if button_id == 'line-chrt-btn-4':
-        query = query.filter(models.Bourbon.insert_date >= onewk)
+        query = query.filter(models.Bourbon.insert_dt >= onewk)
     if button_id == 'line-chrt-btn-3':
-        query = query.filter(models.Bourbon.insert_date >= onemonth)
+        query = query.filter(models.Bourbon.insert_dt >= onemonth)
     if button_id == 'line-chrt-btn-2':
-        query = query.filter(models.Bourbon.insert_date >= sixmonth)
+        query = query.filter(models.Bourbon.insert_dt >= sixmonth)
     if button_id == 'line-chrt-btn-1':
-        query = query.filter(models.Bourbon.insert_date >= twelvemonth)
+        query = query.filter(models.Bourbon.insert_dt >= twelvemonth)
 
     df_line = pd.read_sql(query.statement, models.session.bind)
     models.session.close()
@@ -382,12 +382,12 @@ def update_hbar_chrt(date, product):
                     models.Bourbon.storeid.label('storeid'),
                     models.Bourbon_stores.store_city.label('store_city'),
                     func.avg(models.Bourbon.quantity).label('quantity'),
-                    func.max(models.Bourbon.insert_date).label('last_seen')
+                    func.max(models.Bourbon.insert_dt).label('last_seen')
                 ) \
                 .join(models.Bourbon_stores) \
                 .group_by(models.Bourbon.storeid) \
                 .filter(
-                    models.Bourbon.insert_date.between(start_of_year, date),
+                    models.Bourbon.insert_dt.between(start_of_year, date),
                     models.Bourbon.productid == product
                 )
                 
@@ -519,14 +519,14 @@ def update_page(date, product):
     prev_yr = curr_yr - 1
 
     query = models.session.query(
-                    models.Bourbon.insert_date.label('date'),
+                    models.Bourbon.insert_dt.label('date'),
                     func.sum(models.Bourbon.quantity).label('quantity'),
                     models.Bourbon.year.label('year')
                 ) \
-                .group_by(models.Bourbon.insert_date) \
+                .group_by(models.Bourbon.insert_dt) \
                 .filter(
                     models.Bourbon.year >= prev_yr,
-                    models.Bourbon.insert_date >= '2020-03-01',
+                    models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == product
                 )
 

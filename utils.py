@@ -36,7 +36,7 @@ def min_data_date():
     """Find the min date from the database"""
 
     query = models.session.query(
-                func.min(models.Bourbon.insert_date)
+                func.min(models.Bourbon.insert_dt)
             )
 
     df = pd.read_sql(query.statement, models.session.bind)

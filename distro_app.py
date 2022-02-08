@@ -1,16 +1,13 @@
 
-from dash import html, dcc, Input, Output, State, callback_context
-import dash
-from dash.dcc.Loading import Loading
-from dash.dependencies import ALL, MATCH
+from dash import html, dcc, Input, Output, State
+from dash.dependencies import ALL
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
-from dash_bootstrap_components._components.Col import Col
 import pandas as pd
 import models
 import os
 import dash_leaflet as dl
-from sqlalchemy import cast, Date, func
+from sqlalchemy import func
 import datetime as dt
 import time
 
@@ -100,15 +97,15 @@ def load_distro_data(path, input_product, store_state):
                     models.Bourbon.longitude, 
                     models.Bourbon.latitude, 
                     func.Concat(models.Bourbon_stores.store_addr_2, ' ', models.Bourbon_stores.store_city).label('store_addr_disp'),
-                    cast(models.Bourbon.insert_date, Date).label('date'),
+                    models.Bourbon.insert_dt.label('date'),
                     models.Bourbon.quantity
                 ) \
                .join(models.Bourbon_stores) \
                .filter(
-                    cast(models.Bourbon.insert_date, Date) >= '2020-03-01',
+                    models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == input_product
                 ) \
-                .order_by(models.Bourbon.insert_date)
+                .order_by(models.Bourbon.insert_dt)
 
     df = pd.read_sql(map_q.statement, models.session.bind)
     models.session.close()

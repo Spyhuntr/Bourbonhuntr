@@ -85,7 +85,7 @@ def update_page(input_product, input_store):
                .join(models.Bourbon_stores) \
                .join(models.Bourbon_desc) \
                .filter(
-                   models.Bourbon.insert_date == utils.get_run_dt()
+                   models.Bourbon.insert_dt == utils.get_run_dt()
                 )
 
     if input_product:

@@ -1,6 +1,6 @@
 from db_conn import engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, DECIMAL, Date, ForeignKey, cast, func, extract
+from sqlalchemy import Column, String, Integer, DECIMAL, Date, ForeignKey, func, extract
 from sqlalchemy.orm import sessionmaker, column_property, relationship
 
 Base = declarative_base()
@@ -12,7 +12,6 @@ class Bourbon(Base):
     productid = Column(String)
     storeid = Column(String)
     quantity = Column(Integer)
-    distance = Column(DECIMAL)
     latitude = Column(DECIMAL)
     longitude = Column(DECIMAL)
     area_code = Column(String)
@@ -20,7 +19,6 @@ class Bourbon(Base):
     linenumber = Column(String)
     phone_number = Column(String)
     insert_dt = Column(Date)
-    insert_date = column_property(cast(insert_dt, Date))
     year = column_property(extract('year', insert_dt))
 
     products = relationship("Bourbon_desc")

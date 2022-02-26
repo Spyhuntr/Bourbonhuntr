@@ -1,8 +1,6 @@
 
-from dash import html, dcc, Input, Output, callback_context
+from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
-from sd_material_ui import Drawer
-import os
 
 from app import app
 import summary_app, analytics_app, map_app, distro_app
@@ -11,77 +9,88 @@ from environment.settings import APP_HOST, APP_PORT, APP_DEBUG, DEV_TOOLS_PROPS_
 
 server = app.server
 
-cwd_path = os.path.dirname(__file__)
-
 #begin layout section
-icon_set = dbc.Col([
-            html.A(
-                children=html.I(id='dwnload-prd-list', className='fas fa-download fa-lg'),
-                className='me-1',
-                style={'cursor': 'pointer'}
-            ),
-            dcc.Download(id="download-product-csv"),
-            html.A(
-                href="https://abc.virginia.gov",
-                children=html.I(id='more-sites', className='fas fa-store fa-lg'),
-                target="_blank"
-            )
-        ], width=2, md=1, lg=1, class_name='g-0')
+icon_set = dbc.Col(
+            dbc.DropdownMenu(
+                id='admin-menu',
+                label='',
+                children=[
+                    dbc.DropdownMenuItem(
+                        html.A(
+                            href="https://abc.virginia.gov",
+                            children=[
+                                html.I(id='more-sites', className='fas fa-store fa-fw fa-lg me-2'),
+                                html.Span('Go to ABC Site')
+                            ],
+                            target="_blank"
+                        )
+                    ),
+                    dbc.DropdownMenuItem(
+                        html.A(
+                            id='dwnload-prd-list',
+                            href="#",
+                            children=[
+                                html.I(className='fas fa-download fa-fw fa-lg me-2'),
+                                html.Span('Tracked Products')
+                            ]
+                        )
+                    ),
+                    dcc.Download(id="download-product-csv")
+                ],
+                nav=True
+            ), width=2, md=1, lg=1, class_name='g-0'
+)
 
 navbar = dbc.Row([
         dbc.Col(
-            html.I(id='menu-button', className='fas fa-bars fa-2x'),
-        width=1, className='col-sm-auto'),
+            html.I(id='menu-button', className='fas fa-bars fa-2x'), 
+            width=1, className='col-sm-auto'
+        ),
         dbc.Col(
             html.Div(
-                html.Img(src=os.path.join(cwd_path, '/assets/TheBourbonHuntr_Logo_v1.png'), height='50px', width='215px')
+                html.Img(src='/assets/TheBourbonHuntr_Logo_v1.png', height='50px', width='215px')
             ), className='navbar-title'),
         icon_set
     ], className='navbar', justify='between')
 
 
-left_menu = Drawer(
+left_menu = dbc.Offcanvas(
     id='left-side-menu',
-    className='drawer',
     children=[
     html.Div([
-        html.Img(src=os.path.join(cwd_path, '/assets/bourbon-nav-img.jpg'), style={'max-width':'100%'})
+        html.Img(src='/assets/bourbon-nav-img.jpg', style={'max-width':'100%'})
     ]),
     html.Ul([
-        html.Li('Pages', className='drawer-title'),
+        html.Li([
+            dcc.Link([
+                html.I(className='fas fa-home fa-fw fa-2x'),
+                html.Span('Daily Inventory', className='align-top')
+            ], href='/', refresh=True)
+        ], id='daily_inv_link', className='side-nav-link'),
 
-        dcc.Link([
-            html.Li([
-                html.I(className='fas fa-home'), 
-                html.Span('Daily Inventory') 
-            ], id='daily_inv_link', className='side-nav-link')
-        ], href='/', refresh=True),
+        html.Li([
+            dcc.Link([
+                html.I(className='fas fa-chart-bar fa-fw fa-2x'), 
+                html.Span('Analytics', className='align-top') 
+            ], href='/analytics_app', refresh=True),
+        ], id='anala_link', className='side-nav-link'),
 
-        dcc.Link([
-            html.Li([
-                html.I(className='fas fa-chart-bar'), 
-                html.Span('Analytics') 
-            ], id='anala_link', className='side-nav-link')
-        ], href='/analytics_app', refresh=True),
+        html.Li([
+            dcc.Link([
+                html.I(className='fas fa-map fa-fw fa-2x'), 
+                html.Span('Current Inventory Map', className='align-top') 
+            ], href='/map_app', refresh=True),
+        ], id='map_ci_link', className='side-nav-link'),
 
-        html.Li([html.Span('Maps')], className='side-nav-link'),
+        html.Li([
+            dcc.Link([
+                html.I(className='fas fa-map-marker fa-fw fa-2x'), 
+                html.Span('Distribution Over Time', className='align-top') 
+            ], href='/distro_app', refresh=True),
+        ], id='distro_link', className='side-nav-link')
 
-        dcc.Link([
-            html.Li([
-                html.I(className='fas fa-map'), 
-                html.Span('Current Inventory') 
-            ], id='map_ci_link', className='side-nav-link side-nav-sub')
-        ], href='/map_app', refresh=True),
-
-        dcc.Link([
-            html.Li([
-                html.I(className='fas fa-map-marker'), 
-                html.Span('Distribution Over Time') 
-            ], id='distro_link', className='side-nav-link side-nav-sub')
-        ], href='/distro_app', refresh=True),
-
-    ], className='side-nav')
-])
+    ], className='side-nav mt-4')
+], is_open=False)
 
 
 def serve_layout():
@@ -95,9 +104,7 @@ def serve_layout():
                     html.Div(id='page-content')
                 ], lg=12)
             ])
-        ], fluid=True),
-        html.Div(id='backdrop'),
-        html.Div(id='dummy')
+        ], fluid=True)
 ])
 
 app.layout = serve_layout
@@ -118,29 +125,15 @@ def display_page(pathname):
 
 
 @app.callback(
-    [Output('left-side-menu', 'open'), Output('backdrop', 'style')],
-    [Input('menu-button', 'n_clicks'), Input('backdrop', 'n_clicks')])
-def disp_menu(n1, n2):
-    ctx = callback_context
+    Output('left-side-menu', 'is_open'),
+    Input('menu-button', 'n_clicks'),
+    [State('left-side-menu', 'is_open')]
+)
+def disp_menu(n1, is_open):
+    if n1:
+        return not is_open
+    return is_open
 
-    clicked = ctx.triggered[0]['prop_id'].split('.')[0]
-
-    turn_on = [
-        True,
-        {'visibility': 'visible'}
-    ]
-
-    turn_off = [
-        False,
-        {'visibility': 'hidden'}
-    ]
-
-    if clicked == 'menu-button':
-        return turn_on
-    elif clicked == 'backdrop':
-        return turn_off
-    else:
-        return turn_off
 
 @app.callback(
     Output('download-product-csv', 'data'),

@@ -6,7 +6,7 @@ import models
 import os
 import utils
 import dash_leaflet as dl
-from sqlalchemy import cast, Date, func
+from sqlalchemy import func
 
 from app import app
 
@@ -45,21 +45,25 @@ form = dbc.Card([
 
 mapbox_url = "https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{{z}}/{{x}}/{{y}}{{r}}?access_token={access_token}"
 
-quantity_map = html.Div(
-    children=[
-        dl.Map(id='quantity-map',
-               center=[37.95, -79.25],
-               zoom=8.3,
-               children=[
-                    dl.TileLayer(url=mapbox_url.format(
-                        id="light-v9", access_token=mapbox_access_token)
-                    ),
-                    dl.LocateControl(options={'locateOptions': {'enableHighAccuracy': True}}),
-                    dl.LayerGroup(id="icon_layer")
-                ]
-        )
-    ], style={'position': 'absolute', 'top': '61px', 'height': '93vh', 'width': '100%'}
-)
+quantity_map = dcc.Loading(
+    id='loader',
+    children=[html.Div(
+        children=[
+            dl.Map(id='quantity-map',
+                   center=[37.95, -79.25],
+                   zoom=8.3,
+                   children=[
+                       dl.TileLayer(url=mapbox_url.format(
+                           id="light-v9", access_token=mapbox_access_token)
+                       ),
+                       dl.LocateControl(options={'locateOptions': {
+                           'enableHighAccuracy': True}}),
+                       dl.LayerGroup(id="icon_layer")
+                   ]
+                   )
+        ], style={'position': 'absolute', 'top': '61px', 'height': '93vh', 'width': '100%'}
+    )
+    ], fullscreen=True)
 
 layout = html.Div([
     dcc.Store(id='map_app_store', storage_type='session'),
@@ -90,7 +94,7 @@ def load_data(path):
                .join(models.Bourbon_stores) \
                .group_by(models.Bourbon.productid, models.Bourbon_stores.store_addr_2) \
                .filter(
-                   cast(models.Bourbon.insert_dt, Date) == utils.get_run_dt(),
+                   models.Bourbon.insert_dt == utils.get_run_dt(),
                    
                 )
 

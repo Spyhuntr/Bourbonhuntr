@@ -188,6 +188,7 @@ def update_page(date, product):
                     func.sum(models.Bourbon.quantity).label('quantity')
                 ) \
                 .group_by(models.Bourbon.insert_dt) \
+                .order_by(models.Bourbon.insert_dt) \
                 .filter(
                     models.Bourbon.insert_dt.between(start_of_year, date),
                     models.Bourbon.productid == product
@@ -195,7 +196,6 @@ def update_page(date, product):
 
     df = pd.read_sql(query.statement, models.session.bind)
     models.session.close()
-
     df['quantity'] = df['quantity'].astype(int)
 
     kpi_df = df[(df['insert_date'] == today)]
@@ -316,9 +316,9 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
                     func.sum(models.Bourbon.quantity).label('quantity')
                 ) \
                 .group_by(models.Bourbon.insert_dt) \
+                .order_by(models.Bourbon.insert_dt) \
                 .filter(
                     models.Bourbon.insert_dt.between(twelvemonth, date_param),
-                    models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == product
                 )
 

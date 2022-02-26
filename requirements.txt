@@ -8,5 +8,4 @@ pandas==1.0.3
 plotly==5.5.0
 pymysql==1.0.2
 python-dotenv==0.19.1
-sd-material-ui==4.6.0
 SQLAlchemy==1.4.29

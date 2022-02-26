@@ -3,7 +3,6 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import models
 import utils
-import sd_material_ui as mui
 
 from app import app
 
@@ -43,7 +42,7 @@ layout = html.Div([
         html.H3(id='summary-title', className='header g-0')
     ], style={'text-align': 'center'}),
     dbc.Row([
-        html.P("""This site tracks bourbon inventory in Virginia and the dataset is captured in the morning once a day.  This program cannot guarantee the availability of a particular product.
+        html.P("""This site tracks bourbon inventory in Virginia and the dataset is captured in the morning twice a day.  This program cannot guarantee the availability of a particular product.
                 If you wish to know if a product is currently available, please go to the VA ABC site.""", 
                 className='sub-header g-0')
     ], style={'text-align': 'center'}),
@@ -52,27 +51,43 @@ layout = html.Div([
     ]),
     dbc.Row([
         dbc.Col([
+            html.A(
+                id='dwnload-curr-inv-list',
+                href="#",
+                children=[
+                    html.Span('Download Current Inventory'),
+                    dcc.Download(id="download-curr-inv-csv")
+                ]
+            )
+        ], width=3), 
+    ], justify='end'),
+    dbc.Row([
+        dbc.Col([
             dcc.Loading(
                 id='loader',
                 children=[html.Div(id='quantity-tbl-div')]
             )], lg=9)
     ], justify='center'),
 
-    mui.Snackbar(
-        id='snackbar',
-        message=f'Heads up! The database has not finished updating for {utils.now().strftime("%m-%d-%Y")}.',
-        autoHideDuration=10000
-    )
+    html.Div([
+        dbc.Toast(
+            [html.P(f'Still updating for {utils.now().strftime("%m-%d-%Y")}.')],
+            id='snackbar',
+            header='Heads up!',
+            icon='info',
+            duration=20000,
+            is_open=False
+        )
+    ], className="position-fixed bottom-0 end-0 p-3")
 
 ])
 
 
-
 @app.callback(
-    Output(component_id='quantity-tbl-div', component_property='children'),
+    Output('quantity-tbl-div', 'children'),
     
-    [Input(component_id='prod-select', component_property='value'),
-     Input(component_id='store-select', component_property='value')]
+    [Input('prod-select', 'value'),
+     Input('store-select', 'value')]
 )
 def update_page(input_product, input_store):
 
@@ -129,24 +144,46 @@ def update_page(input_product, input_store):
 
     return dash_tbl
 
+
 @app.callback(
-    [Output(component_id="snackbar", component_property='open'),
-     Output(component_id="snackbar", component_property='message')],
-    [Input(component_id='url', component_property='pathname')],
+    Output("snackbar", 'is_open'),
+    [Input('url', 'pathname')],
 )
 def toggle_modal(url):
 
-    text = 'Heads up! The database has not finished updating for '
-
     if not utils.is_data_loading():
-        return [True, f'{text}{utils.now().strftime("%m-%d-%Y")}.']
-    else:
-        return [None, None]
+        return True
+
 
 @app.callback(
-    Output(component_id="summary-title", component_property='children'),
-    [Input(component_id='url', component_property='pathname')],
+    Output("summary-title", 'children'),
+    [Input('url', 'pathname')],
 )
 def title_date(url):
 
     return "Welcome to the Bourbonhuntr! Inventory for {}.".format(utils.get_run_dt().strftime('%m-%d-%Y'))
+
+
+@app.callback(
+    Output('download-curr-inv-csv', 'data'),
+    Input('dwnload-curr-inv-list', 'n_clicks'),
+    prevent_initial_call=True,
+)
+def download_products(n1):
+
+    query = models.session.query(
+                models.Bourbon.storeid, 
+                models.Bourbon_stores.store_full_addr,
+                models.Bourbon_desc.description,
+                models.Bourbon.quantity
+            ) \
+            .join(models.Bourbon_stores) \
+            .join(models.Bourbon_desc) \
+            .filter(
+                models.Bourbon.insert_dt == utils.get_run_dt()
+            )
+
+    df = pd.read_sql(query.statement, models.session.bind)
+    models.session.close()
+
+    return dcc.send_data_frame(df.to_csv, f"Current Inventory {utils.get_run_dt()}.csv")

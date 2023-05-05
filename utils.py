@@ -2,6 +2,7 @@ import datetime as dt
 import models
 import pandas as pd
 from sqlalchemy import func
+import dash_mantine_components as dmc
 
 def now():
     """Get the current timestamp."""
@@ -44,35 +45,4 @@ def min_data_date():
     return pd.to_datetime(df.values[0]).date[0]
 
 
-no_data_figure = {
-            "layout": {
-                "xaxis": {
-                    "visible": False
-                },
-                "yaxis": {
-                    "visible": False
-                },
-                "annotations": [
-                    {
-                        "text": "No Data Found",
-                        "xref": "paper",
-                        "yref": "paper",
-                        "showarrow": False,
-                        "font": {
-                            "size": 28
-                        }
-                    }
-                ],
-            'height': 30}
-        }
-
-default_figure = {
-            "layout": {
-                "xaxis": {
-                    "visible": False
-                },
-                "yaxis": {
-                    "visible": False
-                },
-            'height': 30}
-        }
+no_data_figure = dmc.Text('No data found', align='center', size='xl')

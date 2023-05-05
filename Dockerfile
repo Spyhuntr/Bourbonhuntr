@@ -14,4 +14,4 @@ RUN apt-get update \
 
 EXPOSE 8050
 
-ENTRYPOINT [ "gunicorn", "--config", "gunicorn_config.py", "index:server" ]
+ENTRYPOINT [ "gunicorn", "--config", "gunicorn_config.py", "app:server" ]

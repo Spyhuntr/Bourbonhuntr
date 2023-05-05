@@ -1,251 +1,33 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+body{
+    background-color: #f5f7fa !important;
+} 
 
-body {
-    margin: 0;
-    font-family: 'Lato', sans-serif;
-    background-color: rgba(0, 62, 193, 0.03);
+.ag-theme-alpine {
+    --ag-font-family: "Inter", sans-serif;
 }
 
-.header {
-    margin: 0;
-    color: #606060;
+.mantine-MediaQuery-media {
+    width: auto !important;
 }
 
-.sub-header {
-    color: #606060;
+.ag-center-header .ag-header-cell-label {
+    justify-content: center;
 }
 
-#quantity-tbl-div {
-    overflow-y: auto;
-    max-height: 43rem;
-}
-
-thead th { 
-    position: sticky; 
-    top: 0;
-    background-color: #446e9b !important;
-    color: #FFF;
-}
-
-.offcanvas-header {
-    display: none;
-}
-
-.offcanvas {
+input:invalid {
+    background-color: ivory;
     border: none;
-    width: 300px
-}
-
-.offcanvas-body {
-    padding: 0;
-}
-
-.side-nav {
-    list-style: none;
-    padding: 0;
-}
-
-.side-nav li{
-    padding: 6px 8px;
-}
-
-.side-nav li a {
-    position: relative;
-    display: block;
-    padding: 4px 0;
-    text-decoration: none;
-}
-  
-.side-nav li a::after {
-    position: absolute;
-    content: "";
-    top: 100%;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: #3498db;
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform 0.5s;
-  }
-
-.side-nav li a:hover::after {
-    transform: scaleX(1);
-    transform-origin: left;
-  }
-
-.side-nav i{
-    margin: 0 10px 0 0;
-}
-
-.nav-link {
-    padding: 0;
-}
-
-.dropdown-item a {
-    text-decoration: none !important;
-}
-
-.nav-link::after {
-    display: none;
-}
-
-.nav-link::before {
-    font-family: "Font Awesome 5 Free";
-    font-weight: 900;
-    font-size: 2rem;
-	content: "\f013";
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-.map-sub-menu {
-    display: none;
-}
-
-.side-sub-menu-hdr:hover ul {
-    display:block;
-}
-
-.list-group-item-action {
-    width: auto;
-    cursor: pointer;
-}
-
-.card {
-    z-index: 0;
-}
-
-.CalendarDay__blocked_out_of_range {
-    text-decoration: line-through;
-}
-
-.DateInput, .DateInput_1 {
-    border-radius: 4px 0 0 4px !important;
-}
-
-.DateInput_input, .DateInput_input_1 {
-    Height: 34px !important;
-    Width: 100% !important;
-    border-radius: inherit;
-}
-
-#menu-button {
-    cursor: pointer;
-    opacity: 0.7;
-    transition: 0.3s;
-}
-
-#menu-button:hover {
-    opacity: 1
+    outline: 2px solid #ff0000;
+    border-radius: 5px;
 }
 
 .red {
-    color: red
+    color: #ff0000;
 }
 
 .green {
-    color: green
-}
-
-
-
-
-
-.navbar {
-    background-color: rgb(255,255,255);
-    box-shadow: 0px 1px 3px rgb(0 0 0 / 12%), 0px 1px 2px rgb(0 0 0 / 24%);
-    margin: 0px 0px 15px 0px;
-    padding: 0px;
-    border-width: 0px 0px 0px 0px;
-    border-style: solid;
-    border-color: #e2e2e2;
-    border-radius: 0px;
-    height: 60px;
-}
-
-.card {
-    border-width: 0px;
-    border-style: solid;
-    border-color: rgb(226, 226, 226);
-    border-radius: 0px;
-    outline: rgb(226, 226, 226) solid 0px;
-    box-shadow: rgb(0 0 0 / 12%) 0px 1px 3px, rgb(0 0 0 / 24%) 0px 1px 2px;
-}
-
-.card-header {
-    font-weight: bold;
-    margin: 5px 10px 0 10px;
-    background-color: #ffffff;
-    border-width: 0px 0px 1px 0px;
-    border-style: solid;
-    border-color: #e2e2e2;
-    box-shadow: 0px 0px 0px rgb(0 0 0 / 0%);
-}
-
-
-.map-input {
-    box-shadow: 0 0 2px rgb(0 0 0 / 20%), 0 -1px 0 rgb(0 0 0 / 2%);
-    border-radius: 8px 8px 0 0;
-}
-
-.map-tooltip {
-    font-size: 16px;
-}
-
-#slider_container > div {
-    padding: 0 !important;
-}
-
-.rc-slider-rail {
-    background-color: #eee;
-}
-
-.rc-slider-dot {
-    width: 14px;
-    height: 14px;
-    bottom: -5px;
-}
-
-.rc-slider-dot:not(:last-child):not(:first-child) {
-    display: none;
-}
-
-.rc-slider-handle {
-    width: 20px;
-    height: 20px;
-    transform: translate(-43%, -16%) !important;
-} 
-
-
-.distro-map {
-    position: absolute;
-    top: 61px;
-    height: 93vh;
-    width: 100%;
-}
-
-.map-form {
-    z-index: 1;
-    left: 60px;
-}
-
-@media (max-width: 575px) {
-    .map-form {
-        z-index: 1;
-        position: relative;
-        left: 0px;
-    }
+    color: #00a100;
 }

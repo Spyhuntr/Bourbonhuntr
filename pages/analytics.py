@@ -1,7 +1,7 @@
 
-from dash import html, dcc, Input, Output, callback_context
-import dash_bootstrap_components as dbc
-from dash import dash_table as dasht
+import dash
+from dash import html, dcc, Input, Output, callback
+import dash_mantine_components as dmc
 import pandas as pd
 import models
 import datetime as dt
@@ -12,174 +12,138 @@ from dateutil.relativedelta import *
 from plotly import graph_objs as go
 from plotly.subplots import make_subplots
 import numpy as np
+import dash_ag_grid as dag
 
-from app import app
+dash.register_page(__name__, path='/analytics', title='Analytics')
 
 df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
 product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['description'])]
 
-inv_total_widget = dbc.Card([
-    dbc.CardBody([
-        dcc.Loading(
-            id='loading-1',
+inv_total_widget = dmc.Paper([
+    dmc.LoadingOverlay(
+        children=[
+            dmc.Stack([
+                html.Div([
+                    dmc.Text(id='tot-inv-title'),
+                    dmc.Text(id='tot-inv', size='2rem', weight=700)
+                ], style={'position': 'relative', 'z-index': '999'}),
+                html.Div(id='tot-spark-container')
+            ])
+        ],
+    loaderProps={"variant": "dots", "color": "orange", "size": "xl"},
+    style={'zIndex':1})
+], shadow="xl", p="md", withBorder=True, id='tot_inv_widget', style={'margin-bottom': "1rem"})
+
+
+inv_ytd_widget = dmc.Paper([
+        dmc.LoadingOverlay(
             children=[
-                dbc.Row([
-                    dbc.Col([
+                dmc.Group([
                         html.Div([
-                            html.H6(id='tot-inv-title'),
-                            html.H2(id='tot-inv')
-                        ], style={'position':'relative', 'z-index': '999'}),
-                        dcc.Graph(
-                            id='tot-spark',
-                            config={
-                                'displayModeBar':False,
-                                'staticPlot':True
-                            },
-                        responsive=True,
-                        style={'height':60, 'margin':'-1rem'})
-                    ])
-                ])
-            ]
-        )
-    ], id='tot_inv_widget')
-], className='mb-2')
-
-inv_ytd_widget = dbc.Card([
-    dbc.CardBody([
-        dcc.Loading(
-            id='loading-2',
-            children=[
-                dbc.Row([
-                    dbc.Col([
+                            dmc.Text('YTD Max'),
+                            dmc.Text(id='ytd-inv', size='2rem', weight=700)
+                        ]),
                         html.Div([
-                            html.H6('YTD Max'),
-                            html.H4(id='ytd-inv')
+                            dmc.Text('Year-over-Year'),
+                            dmc.Text(id='yoy-var-inv', size='2rem', weight=700)
                         ])
-                    ]),
-                    dbc.Col([
-                        html.Div([
-                            html.H6('Year-over-Year'),
-                            html.H4(id='yoy-var-inv')
-                        ])
-                    ])
-                ])
-            ]
-        )
-    ], id='inv_ytd_widget')
-], className='mb-2')
+                ], position="apart")
+            ],
+        loaderProps={"variant": "dots", "color": "orange", "size": "xl"},
+        style={'zIndex':1})
+], shadow="xl", p="md", withBorder=True, id='inv_ytd_widget')
 
 
-line_chart = dbc.Card([
-    dbc.CardHeader('Quantity over Time'),
-    dbc.CardBody([
-        dbc.Row([
-            dbc.Col([
-                dbc.ListGroup([
-                    dbc.ListGroupItem("12 Mths", id="line-chrt-btn-1", action=True),
-                    dbc.ListGroupItem("6 Mths", id="line-chrt-btn-2", action=True),
-                    dbc.ListGroupItem("1 Mth", id="line-chrt-btn-3", action=True),
-                    dbc.ListGroupItem("1 Wk", id="line-chrt-btn-4", action=True)
-                ], horizontal=True)
-            ], className='col-auto')
-        ], justify='end'),
-        dcc.Loading(
-            id='loading-3',
-            children=dcc.Graph(
-                id='inv-line-chrt',
-                style={'padding':'1.25rem'},
-                config={
-                    'displayModeBar':False
-                }
-            )
-        )
-    ], style={'padding':0}),
-    html.Div(id='line-chrt-btn-value', style={'display': 'none'})
-])
+line_chart = dmc.Paper([
+    dmc.Text('Quantity over Time'),
+    dmc.Group([
+    dmc.SegmentedControl(
+        id="line-chart-control",
+        value="twelvemonth",
+        data=[
+            {"value": "twelvemonth", "label": "12 Months"},
+            {"value": "sixmonth", "label": "6 Months"},
+            {"value": "onemonth", "label": "1 Month"},
+            {"value": "onewk", "label": "1 Week"}]
+    )], position='right',style={'margin-top': '-2rem'}),
+    dmc.LoadingOverlay(
+        children=[html.Div(id='inv-line-chrt')],
+        loaderProps={"variant": "dots", "color": "orange", "size": "xl"},
+        style={'zIndex':1}),
+    html.Div(id='line-chrt-btn-value')
+], shadow="xl", p="md", withBorder=True)
 
-hbar_chart = dbc.Card([
-    dbc.CardHeader('Top 20 Stores'),
-    dbc.CardBody([
-        dcc.Loading(
-            id='loading-4',
-            children=html.Div(
-                id='inv-hbar-chrt'
-            )
-        )
-    ])
-], className='mb-2')
+hbar_chart = dmc.Paper([
+    dmc.LoadingOverlay(
+        children=html.Div(
+            id='inv-hbar-chrt'
+        ),
+    loaderProps={"variant": "dots", "color": "orange", "size": "xl"})
+], shadow="xl", p="md", withBorder=True)
 
-cal_chart = dbc.Card([
-    dbc.CardHeader('Calendar'),
-    dbc.CardBody([
-        dcc.Loading(
-            id='loading-4',
-            children=dcc.Graph(
-                id='inv-cal-chrt',
-                config={
-                    'displayModeBar': False
-                }
-            )
-        )
-    ])
-])
+cal_chart = dmc.Paper([
+    dmc.Text('Calendar'),
+    dmc.LoadingOverlay(
+    children=[html.Div(id='inv-cal-chrt')],
+    loaderProps={"variant": "dots", "color": "orange", "size": "xl"})
+], shadow="xl", p="md", withBorder=True)
 
 
-layout = html.Div([
-    dbc.Row([
-        dbc.Col([
-            dcc.Dropdown(
+layout = dmc.Grid([
+    dmc.Col([
+        dmc.Group([
+            dmc.Select(
                 id="analysis-prod-select",
-                options=[{'label': i[1], 'value': i[0]} for i in product_values],
-                placeholder='Select Product...'
+                data=[{'label': i[1], 'value': i[0]}
+                         for i in product_values],
+                placeholder='Select Product...',
+                searchable=True,
+                required=True,
+                icon=[html.I(className='fas fa-magnifying-glass')],
+                style={'zIndex':10}
+            ),
+
+            dmc.DateRangePicker(
+                id='dt-picker',
+                icon=[html.I(className='fas fa-calendar-alt fa-md')],
+                style={"width": 350}
             )
-        ], md=6, lg=4, className='mb-2'),
-        dbc.Col([
-            dbc.InputGroup([
-                dcc.DatePickerSingle(id='dt-picker'),
-                dbc.InputGroupText(
-                    html.I(id='calendar-icon', className='fas fa-calendar-alt fa-md')
-                )],
-            )
-        ], className='col-auto mb-2')
-    ], justify='end'),
-    html.Div(id='analytics_app_page', children=[
-    dbc.Row([
-        dbc.Col([inv_total_widget, inv_ytd_widget], sm=12, md=4, lg=3),
-        dbc.Col([line_chart], sm=12, md=8, lg=9),
-    ], className='mb-2', align='center'),
-    dbc.Row([
-        dbc.Col([hbar_chart], sm=12, md=12, lg=4),
-        dbc.Col([cal_chart], sm=12, md=12, lg=8)
-    ])])
+            
+        ], position="right")
+    ], span=12),
+    dmc.Col([inv_total_widget, inv_ytd_widget], sm=12, md=4, lg=3),
+    dmc.Col([line_chart], sm=12, md=8, lg=9),
+    dmc.Col([hbar_chart], sm=12, md=12, lg=4),
+    dmc.Col([cal_chart], sm=12, md=12, lg=8)
 ])
 
 
-@app.callback(
-    [Output(component_id='dt-picker', component_property='date'),
-     Output(component_id='dt-picker', component_property='min_date_allowed'),
-     Output(component_id='dt-picker', component_property='max_date_allowed')],
-     Input(component_id='url', component_property='pathname')
+@callback(
+    [Output('dt-picker', 'value'),
+     Output('dt-picker', 'minDate'),
+     Output('dt-picker', 'maxDate')],
+     Input('url', 'pathname')
 )
 def updt_controls(url):
-    
-    return utils.get_run_dt(), utils.min_data_date(), utils.get_run_dt()
+    return [utils.get_run_dt(), utils.get_run_dt()], utils.min_data_date(), utils.get_run_dt()
 
 
-@app.callback(
-    [Output(component_id='tot-inv', component_property='children'),
-     Output(component_id='tot-spark', component_property='figure'),
-     Output(component_id='ytd-inv', component_property='children'),
-     Output(component_id='tot-inv-title', component_property='children')],
-    [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='analysis-prod-select', component_property='value')]
+@callback(
+    [Output('tot-inv', 'children'),
+     Output('tot-spark-container', 'children'),
+     Output('ytd-inv', 'children'),
+     Output('tot-inv-title', 'children')],
+    [Input('dt-picker', 'value'),
+     Input('analysis-prod-select', 'value')]
 )
-def update_page(date, product):
+def update_page(dates, product):
 
     if product is None:
-        return ['', utils.default_figure, '', '']
+        return dash.no_update
         
+    from_date, to_date = dates
 
-    today = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    today = dt.datetime.strptime(to_date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
     thirtydaysago = today - dt.timedelta(30)
 
@@ -190,19 +154,19 @@ def update_page(date, product):
                 .group_by(models.Bourbon.insert_dt) \
                 .order_by(models.Bourbon.insert_dt) \
                 .filter(
-                    models.Bourbon.insert_dt.between(start_of_year, date),
+                    models.Bourbon.insert_dt.between(start_of_year, to_date),
                     models.Bourbon.productid == product
                 )
 
     df = pd.read_sql(query.statement, models.session.bind)
     models.session.close()
+
     df['quantity'] = df['quantity'].astype(int)
 
     kpi_df = df[(df['insert_date'] == today)]
 
-    kpi_val = f'{kpi_df["quantity"].sum():,}'
-
-    ytd_val = 0 if df["quantity"].sum() == 0 else f'{df["quantity"].cummax().max():,}'
+    kpi_val = dmc.Text(f'{kpi_df["quantity"].sum():,}')
+    ytd_val = dmc.Text('0') if df["quantity"].sum() == 0 else dmc.Text(f'{df["quantity"].cummax().max():,}')
 
     spark_area_df = df[(df['insert_date'] >= thirtydaysago)]
 
@@ -216,7 +180,7 @@ def update_page(date, product):
         template='simple_white',
         log_y=True
     )
-    
+
     fig.update_yaxes(visible=False),
     fig.update_xaxes(visible=False),
     fig.update_traces(
@@ -227,23 +191,34 @@ def update_page(date, product):
         margin={'t':0,'l':0,'b':0,'r':0}
     )
 
+    graph = dcc.Graph(
+                figure=fig,
+                config={
+                    'displayModeBar': False,
+                    'staticPlot': True
+                },
+                responsive=True,
+                style={'height': 60, 'margin': '-1rem'})
+
     tot_inv_title = today.strftime('%m/%d/%Y') + ' Inventory'
 
-    return kpi_val, fig, ytd_val, tot_inv_title
+    return kpi_val, graph, ytd_val, tot_inv_title
 
 
-@app.callback(
-    Output(component_id='yoy-var-inv', component_property='children'),
-    [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='analysis-prod-select', component_property='value')],
+@callback(
+    Output('yoy-var-inv', 'children'),
+    [Input('dt-picker', 'value'),
+     Input('analysis-prod-select', 'value')],
      prevent_initial_call=True
 )
-def update_page(date, product):
+def update_page(dates, product):
     
     if product is None:
-        return ''
+        return dash.no_update
 
-    today = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    from_date, to_date = dates
+
+    today = dt.datetime.strptime(to_date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
     same_day_last_year = today.replace(today.year - 1)
     start_of_prev_year = today.replace(today.year - 1, month=1, day=1)
@@ -254,7 +229,7 @@ def update_page(date, product):
                 ) \
                 .group_by(models.Bourbon.insert_dt) \
                 .filter(
-                    or_(models.Bourbon.insert_dt.between(start_of_year, date), \
+                    or_(models.Bourbon.insert_dt.between(start_of_year, to_date), \
                         models.Bourbon.insert_dt.between(start_of_prev_year, same_day_last_year)),
                     models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == product
@@ -267,7 +242,7 @@ def update_page(date, product):
     this_yr_quantity = df[(df['insert_date'].between(start_of_year, today))]
 
     yoy_var = 0
-    if not pd.isnull(last_yr_quantity['quantity'].cummax().max()):
+    if not (last_yr_quantity['quantity'].empty or this_yr_quantity['quantity'].empty):
         yoy_var = ((this_yr_quantity['quantity'].cummax().max() - last_yr_quantity['quantity'].cummax().max()) / last_yr_quantity['quantity'].cummax().max()) * 100
  
     arrow = html.I(style={'padding-left': '0.2rem'})
@@ -278,34 +253,24 @@ def update_page(date, product):
     else:
         ''
 
-
     return [f'{abs(yoy_var):,.1f}%', arrow]
 
 
-@app.callback(
-    [Output(component_id='inv-line-chrt', component_property='figure'),
-     Output(component_id='line-chrt-btn-value', component_property='children')],
-    [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='analysis-prod-select', component_property='value'),
-     Input(component_id='line-chrt-btn-1', component_property='n_clicks'),
-     Input(component_id='line-chrt-btn-2', component_property='n_clicks'),
-     Input(component_id='line-chrt-btn-3', component_property='n_clicks'),
-     Input(component_id='line-chrt-btn-4', component_property='n_clicks')],
+@callback(
+    Output('inv-line-chrt', 'children'),
+    [Input('dt-picker', 'value'),
+     Input('analysis-prod-select', 'value'),
+     Input('line-chart-control', 'value')],
      prevent_initial_call=True
 )
-def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_wk_btn):
+def update_page(dates, product, line_chart_btn_val):
 
     if product is None:
-        return [utils.default_figure, '']
+        return dash.no_update
 
-    ctx = callback_context
+    from_date, to_date = dates
 
-    if ctx.triggered[0]['prop_id'].split('.')[0] == 'dt-picker':
-        button_id = None
-    else:
-        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
-    date_param = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    date_param = dt.datetime.strptime(to_date, '%Y-%m-%d').date()
     onewk = date_param - relativedelta(days=6)
     onemonth = date_param - relativedelta(months=1)
     sixmonth = date_param - relativedelta(months=6)
@@ -322,20 +287,20 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
                     models.Bourbon.productid == product
                 )
 
-    if button_id == 'line-chrt-btn-4':
+    if line_chart_btn_val == 'onewk':
         query = query.filter(models.Bourbon.insert_dt >= onewk)
-    if button_id == 'line-chrt-btn-3':
+    if line_chart_btn_val == 'onemonth':
         query = query.filter(models.Bourbon.insert_dt >= onemonth)
-    if button_id == 'line-chrt-btn-2':
+    if line_chart_btn_val == 'sixmonth':
         query = query.filter(models.Bourbon.insert_dt >= sixmonth)
-    if button_id == 'line-chrt-btn-1':
+    if line_chart_btn_val == 'twelvemonth':
         query = query.filter(models.Bourbon.insert_dt >= twelvemonth)
 
     df_line = pd.read_sql(query.statement, models.session.bind)
     models.session.close()
 
     if df_line.empty:
-        return utils.no_data_figure, button_id
+        return utils.no_data_figure
 
     line_fig = px.line(
                 df_line, 
@@ -361,33 +326,43 @@ def update_page(date, product, twelve_mths_btn, six_mths_btn, one_mth_btn, one_w
             "Quantity: %{y}<br>"
     )
 
-    return line_fig, button_id
+    graph = dcc.Graph(
+            figure=line_fig,
+            style={'padding-top': '1.25rem'},
+            config={
+                'displayModeBar': False
+            }
+        )
+
+    return graph
 
 
-@app.callback(
-    Output(component_id='inv-hbar-chrt', component_property='children'),
-    [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='analysis-prod-select', component_property='value')],
+@callback(
+    Output('inv-hbar-chrt', 'children'),
+    [Input('dt-picker', 'value'),
+     Input('analysis-prod-select', 'value')],
      prevent_initial_call=True
 )
-def update_hbar_chrt(date, product):
+def update_hbar_chrt(dates, product):
 
     if product is None:
-        return ''
+        return dash.no_update
 
-    today = dt.datetime.strptime(date, '%Y-%m-%d').date()
+    from_date, to_date = dates
+
+    today = dt.datetime.strptime(to_date, '%Y-%m-%d').date()
     start_of_year = today.replace(month=1, day=1)
 
     query = models.session.query(
                     models.Bourbon.storeid.label('storeid'),
                     models.Bourbon_stores.store_city.label('store_city'),
-                    func.avg(models.Bourbon.quantity).label('quantity'),
+                    func.round(func.avg(models.Bourbon.quantity), 2).label('quantity'),
                     func.max(models.Bourbon.insert_dt).label('last_seen')
                 ) \
                 .join(models.Bourbon_stores) \
                 .group_by(models.Bourbon.storeid) \
                 .filter(
-                    models.Bourbon.insert_dt.between(start_of_year, date),
+                    models.Bourbon.insert_dt.between(start_of_year, to_date),
                     models.Bourbon.productid == product
                 )
                 
@@ -396,40 +371,41 @@ def update_hbar_chrt(date, product):
     models.session.close()
 
     df.sort_values(by='quantity', inplace=True, ascending=False)
-    df.columns = ['Store', 'Store City', 'Avg. Quantity', 'Last Seen']
+    df.columns = ['Store', 'Store City', 'Avg Quantity', 'Last Seen']
 
-    table_fig = dasht.DataTable(
-        id='top_tbl',
-        columns=[{'name': i, 'id': i} for i in df.columns],
-        data = df.head(20).to_dict('records'),
-        page_size=10,
-        style_as_list_view=True,
-        style_cell={'padding': '5px', 'font-family': "'Lato', sans-serif"},
-        style_header={
-            'backgroundColor': 'white',
-            'fontWeight': 'bold'
-        },
-        style_cell_conditional=[
-            {
-                'if': {'column_id': c},
-                'textAlign': 'left'
-            } for c in ['Store', 'Store City']
-        ]
+    columnDefs = [
+        {'headerName': 'Top 20 Stores',
+         'children': [
+        { "field": "Store"},
+        { "field": "Store City"},
+        { "field": "Avg Quantity" },
+        { "field": "Last Seen"}
+         ]}
+    ]
+
+    table_fig = dag.AgGrid(
+        columnDefs = columnDefs,
+        rowData = df.to_dict('records'),
+        columnSize="responsiveSizeToFit",
+        dashGridOptions={"pagination": True, "paginationPageSize": 9, 'domLayout': 'autoHeight', "rowHeight": 30},
+        style={'height': 'auto'} #Removes the arbitrary 400px height
     )
 
     return table_fig
 
 
-@app.callback(
-    Output(component_id='inv-cal-chrt', component_property='figure'),
-    [Input(component_id='dt-picker', component_property='date'),
-     Input(component_id='analysis-prod-select', component_property='value')],
+@callback(
+    Output('inv-cal-chrt', 'children'),
+    [Input('dt-picker', 'value'),
+     Input('analysis-prod-select', 'value')],
      prevent_initial_call=True
 )
-def update_page(date, product):
+def update_page(dates, product):
 
     if product is None:
-        return utils.default_figure
+        return dash.no_update
+
+    from_date, to_date = dates
 
     def build_subplot(df, year, fig, row):
 
@@ -515,7 +491,7 @@ def update_page(date, product):
 
 
 
-    curr_yr = dt.datetime.strptime(date, '%Y-%m-%d').year
+    curr_yr = dt.datetime.strptime(to_date, '%Y-%m-%d').year
     prev_yr = curr_yr - 1
 
     query = models.session.query(
@@ -533,35 +509,20 @@ def update_page(date, product):
     df = pd.read_sql(query.statement, models.session.bind)
     models.session.close()
 
+    if df.empty:
+        return utils.no_data_figure
+
     fig = make_subplots(rows=2, cols=1, subplot_titles=[prev_yr, curr_yr])
     for i, year in enumerate([prev_yr, curr_yr]):
         data=df[df['year'] == year]
         build_subplot(data, year, fig, row=i)
         fig.update_layout(height=395)
-    
-    return fig
 
+        graph = dcc.Graph(
+            figure=fig,
+            config={
+                'displayModeBar': False
+            }
+        )
 
-@app.callback(
-    [Output(f"line-chrt-btn-{i}", "active") for i in range(1,5)],
-    [Input("line-chrt-btn-value", "children")],
-    prevent_initial_call=True
-)
-def set_active_button(button_id):
-
-    if button_id in ('', 'analysis-prod-select', None):
-        return [True, False, False, False]
-    else:
-        return [button_id == f"line-chrt-btn-{i}" for i in range(1,5)]
-
-
-@app.callback(
-    Output('analysis-prod-select', 'style'),
-    Input('analysis-prod-select', 'value')
-)
-def empty_chart(product):
-
-    if product is None:
-        return {'border':'1px solid #f44336'}
-    else:
-        return {}
+    return graph

@@ -7,16 +7,7 @@ import models
 import utils
 import dash_ag_grid as dag
 
-df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
-product_values = [(k, v) for k, v in zip(
-    df_products['productid'], df_products['description'])]
 
-
-df_stores = pd.read_sql(models.store_list_q.statement, models.session.bind)
-store_values = [(k, v) for k, v in zip(
-    df_stores['storeid'], df_stores['store_addr_disp'])]
-
-models.session.close()
 
 # form controls
 form = html.Div(id='form-cntrl-div',
@@ -25,10 +16,7 @@ form = html.Div(id='form-cntrl-div',
                         dmc.Col([
                             dmc.MultiSelect(
                                 id="prod-select",
-                                data=[{'label': i[1], 'value': i[0]}
-                                      for i in product_values],
                                 placeholder='Select Products...',
-                                className="control",
                                 radius="md",
                                 icon=[html.I(className='fas fa-magnifying-glass')]
                             )
@@ -36,10 +24,7 @@ form = html.Div(id='form-cntrl-div',
                         dmc.Col([
                             dmc.MultiSelect(
                                 id="store-select",
-                                data=[{'label': '#' + i[0] + '-' + i[1], 'value': i[0]}
-                                      for i in store_values],
                                 placeholder='Select Stores...',
-                                className="control",
                                 radius="md",
                                 icon=[html.I(className='fas fa-magnifying-glass')]
                             )
@@ -76,6 +61,28 @@ layout = dmc.Grid([
 
 ], justify="center")
 
+
+@callback(
+    [Output('prod-select', 'data'),
+     Output('store-select', 'data')],
+     Input('url', 'pathname')
+)
+def update_page(_):
+
+    df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
+    product_values = [(k, v) for k, v in zip(
+        df_products['productid'], df_products['description'])]
+
+
+    df_stores = pd.read_sql(models.store_list_q.statement, models.session.bind)
+    store_values = [(k, v) for k, v in zip(
+        df_stores['storeid'], df_stores['store_addr_disp'])]
+
+    models.session.close()
+    products = [{'label': i[1], 'value': i[0]} for i in product_values]
+    stores = [{'label': '#' + i[0] + ' - ' + i[1], 'value': i[0]} for i in store_values]
+
+    return products, stores
 
 @callback(
     Output('quantity-tbl-div', 'children'),

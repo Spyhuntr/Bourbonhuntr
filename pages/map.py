@@ -15,7 +15,7 @@ cwd_path = os.path.dirname(__file__)
 mapbox_access_token = open(os.path.join(os.path.split(
     os.path.dirname(__file__))[0], 'mapbox_token')).read()
 
-df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
+df_products = pd.read_sql(models.get_product_list_query(), models.session.bind)
 models.session.close()
 
 product_values = [(k, v) for k, v in zip(
@@ -43,10 +43,9 @@ quantity_map = dl.Map(id='quantity-map',
                           dl.TileLayer(url=mapbox_url.format(
                               id="light-v9", access_token=mapbox_access_token)
                           ),
-                          dl.LocateControl(options={'locateOptions': {
-                              'enableHighAccuracy': True}}),
-                          dl.LayerGroup(id="icon_layer")
-                      ], style={'height': '700px', 'zIndex': 0})
+                          dl.LayerGroup(id="icon_layer"),
+                          dl.LocateControl(locateOptions={'enableHighAccuracy': True})
+                      ], style={'height': '87vh', 'zIndex': 0, 'padding': 0})
 
 
 layout = html.Div(
@@ -58,10 +57,10 @@ layout = html.Div(
                     dmc.Center(
                         children=[
                             dmc.Title(id='error_msg',
-                                      children='Select a product', order=2)
+                                      children='', order=2)
                         ])], sm=4, lg=4),
             dmc.Col([quantity_map], lg=12)
-        ])
+        ], gutter='xs')
     ])
 
 
@@ -79,7 +78,11 @@ def load_data(path):
         func.sum(models.Bourbon.quantity).label('quantity')
     ) \
         .join(models.Bourbon_stores) \
-        .group_by(models.Bourbon.productid, models.Bourbon_stores.store_addr_2) \
+        .group_by(models.Bourbon.productid, 
+                  models.Bourbon.longitude, 
+                  models.Bourbon.latitude, 
+                  models.Bourbon_stores.store_addr_2,
+                  models.Bourbon_stores.store_city) \
         .filter(
         models.Bourbon.insert_dt == utils.get_run_dt(),
 

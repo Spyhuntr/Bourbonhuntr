@@ -6,11 +6,13 @@ COPY . /app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHON UNBUFFERED 1
 
-RUN apt-get update \
-    && apt-get upgrade -y python3-pip \
-    && apt-get install -y python3.8 wget curl \
-    && pip3 install -r requirements.txt \
-    && apt autoremove -y
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  python3-pip \
+  python3-dev \
+  libpq-dev \
+  wget \
+  curl \
+  && pip3 install -r requirements.txt
 
 EXPOSE 8050
 

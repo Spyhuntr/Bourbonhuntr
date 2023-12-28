@@ -19,23 +19,17 @@ cwd_path = os.path.dirname(__file__)
 mapbox_access_token = open(os.path.join(os.path.split(
     os.path.dirname(__file__))[0], 'mapbox_token')).read()
 
-df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
+df_products = pd.read_sql(models.get_product_list_query(), models.session.bind)
 models.session.close()
 
 product_values = [(k, v) for k, v in zip(
     df_products['productid'], df_products['description'])]
 
 # #form controls
-form = dmc.Paper(
-    withBorder=True,
-    p="md",
-    radius="md",
-    children=[
-        dmc.Group([
+form = dmc.Group([
             dmc.Select(
                 id="distro-prod-select",
-                data=[{'label': i[1], 'value': i[0]}
-                  for i in product_values],
+                data=[{'label': i[1], 'value': i[0]} for i in product_values],
                 placeholder='Select Products...',
                 className="control",
                 radius="md",
@@ -43,12 +37,10 @@ form = dmc.Paper(
                 icon=[html.I(className='fas fa-magnifying-glass')]
             ),
             html.Div(id='slider_container'),
-            dmc.Title(id='date_text', order=5)], grow=True, spacing="xl"),
-        dcc.Loading(id="loading01",
-                    children=html.Div(id="loading-output1"), type='dot', color='orange'
-                    )
-    ]
-)
+            dmc.Title(id='date_text', order=5),
+            dcc.Loading(id="loading01",
+                children=html.Div(id="loading-output1"), type='dot', color='orange'
+            )], grow=True)
 
 mapbox_url = "https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{{z}}/{{x}}/{{y}}{{r}}?access_token={access_token}"
 
@@ -59,25 +51,21 @@ distro_map = dl.Map(id='distro-quantity-map',
                         dl.TileLayer(url=mapbox_url.format(
                             id="light-v9", access_token=mapbox_access_token)
                         ),
-                        dl.LocateControl(options={'locateOptions': {
-                            'enableHighAccuracy': True}}),
-                        dl.LayerGroup(id="distro_icon_layer")
-                    ], style={'height': '650px', 'zIndex': 0})
+                        dl.LayerGroup(id="distro_icon_layer"),
+                        dl.LocateControl(locateOptions={'enableHighAccuracy': True})
+                    ], style={'height': '85vh', 'zIndex': 0})
 
 
 layout = html.Div(
     children=[
         dmc.Grid([
             dcc.Store(id='map_distro_store', storage_type='memory'),
-            dmc.Col([form], sm=12, lg=6),
+            dmc.Col([form], sm=8),
             dmc.Col([
-                    dmc.Center(
-                        children=[
-                            dmc.Title(id='distro_error_msg',
-                                      children='Select a product', order=2)
-                        ])], sm=4, lg=4),
+                dmc.Title(id='distro_error_msg', order=2)
+            ], sm=4),
             dmc.Col([distro_map], lg=12)
-        ])
+        ], gutter='xs')
     ])
 
 
@@ -102,7 +90,6 @@ def load_distro_data(input_product, store_state):
     ) \
         .join(models.Bourbon_stores) \
         .filter(
-        models.Bourbon.insert_dt >= '2021-03-01',
         models.Bourbon.productid == input_product
     ) \
         .order_by(models.Bourbon.insert_dt)

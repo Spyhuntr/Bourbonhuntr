@@ -29,9 +29,9 @@ def is_data_loading():
     df = pd.read_sql(query.statement, models.session.bind)
 
     if df.values[0][0] == 'C':
-        return True
-    else:
         return False
+    else:
+        return True
 
 def min_data_date():
     """Find the min date from the database"""

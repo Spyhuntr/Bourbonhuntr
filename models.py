@@ -59,10 +59,14 @@ class ETL_control_status(Base):
 Session = sessionmaker(bind=engine)
 session = Session()
 
-product_list_q = session.query(Bourbon_desc.productid, Bourbon_desc.description) \
-                        .order_by(Bourbon_desc.description)
+def get_product_list_query():
+    return session.query(
+            Bourbon_desc.productid, 
+            Bourbon_desc.description
+        ).order_by(Bourbon_desc.description).statement
 
-store_list_q = session.query(
-                        Bourbon_stores.storeid, 
-                        func.Concat(Bourbon_stores.store_addr_2, ' ', Bourbon_stores.store_city).label('store_addr_disp')) \
-                        .order_by(Bourbon_stores.storeid)
+def get_store_list_query():
+    return session.query(
+        Bourbon_stores.storeid,
+        func.Concat(Bourbon_stores.store_addr_2, ' ', Bourbon_stores.store_city).label('store_addr_disp')  
+    ).order_by(Bourbon_stores.storeid).statement

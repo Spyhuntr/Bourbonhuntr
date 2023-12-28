@@ -16,7 +16,7 @@ import dash_ag_grid as dag
 
 dash.register_page(__name__, path='/analytics', title='Analytics')
 
-df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
+df_products = pd.read_sql(models.get_product_list_query(), models.session.bind)
 product_values = [(k,v) for k, v in zip(df_products['productid'], df_products['description'])]
 
 inv_total_widget = dmc.Paper([
@@ -154,11 +154,12 @@ def update_page(dates, product):
                 .group_by(models.Bourbon.insert_dt) \
                 .order_by(models.Bourbon.insert_dt) \
                 .filter(
-                    models.Bourbon.insert_dt.between(start_of_year, to_date),
+                    models.Bourbon.insert_dt.between(start_of_year, today),
                     models.Bourbon.productid == product
                 )
 
     df = pd.read_sql(query.statement, models.session.bind)
+
     models.session.close()
 
     df['quantity'] = df['quantity'].astype(int)
@@ -229,9 +230,8 @@ def update_page(dates, product):
                 ) \
                 .group_by(models.Bourbon.insert_dt) \
                 .filter(
-                    or_(models.Bourbon.insert_dt.between(start_of_year, to_date), \
+                    or_(models.Bourbon.insert_dt.between(start_of_year, today), \
                         models.Bourbon.insert_dt.between(start_of_prev_year, same_day_last_year)),
-                    models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == product
                 )
 
@@ -360,9 +360,9 @@ def update_hbar_chrt(dates, product):
                     func.max(models.Bourbon.insert_dt).label('last_seen')
                 ) \
                 .join(models.Bourbon_stores) \
-                .group_by(models.Bourbon.storeid) \
+                .group_by(models.Bourbon.storeid, models.Bourbon_stores.store_city) \
                 .filter(
-                    models.Bourbon.insert_dt.between(start_of_year, to_date),
+                    models.Bourbon.insert_dt.between(start_of_year, today),
                     models.Bourbon.productid == product
                 )
                 
@@ -502,7 +502,6 @@ def update_page(dates, product):
                 .group_by(models.Bourbon.insert_dt) \
                 .filter(
                     models.Bourbon.year >= prev_yr,
-                    models.Bourbon.insert_dt >= '2020-03-01',
                     models.Bourbon.productid == product
                 )
 

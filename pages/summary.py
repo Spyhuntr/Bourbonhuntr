@@ -69,12 +69,12 @@ layout = dmc.Grid([
 )
 def update_page(_):
 
-    df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
+    df_products = pd.read_sql(models.get_product_list_query(), models.session.bind)
     product_values = [(k, v) for k, v in zip(
         df_products['productid'], df_products['description'])]
 
 
-    df_stores = pd.read_sql(models.store_list_q.statement, models.session.bind)
+    df_stores = pd.read_sql(models.get_store_list_query(), models.session.bind)
     store_values = [(k, v) for k, v in zip(
         df_stores['storeid'], df_stores['store_addr_disp'])]
 
@@ -117,7 +117,7 @@ def update_page(input_product, input_store):
     df.columns = ['Store #', 'Store Address', 'Product', 'Quantity']
 
     columnDefs = [
-        { "field": "Store #", 'suppressSizeToFit': True},
+        { "field": "Store #"},
         { "field": "Store Address"},
         { "field": "Product" },
         { "field": "Quantity", 'cellStyle': {'textAlign': 'center'}, 'headerClass': 'ag-center-header'}
@@ -126,7 +126,8 @@ def update_page(input_product, input_store):
     dash_tbl = dag.AgGrid(
         columnDefs = columnDefs,
         rowData = df.to_dict('records'),
-        columnSize="responsiveSizeToFit",
+        columnSize=None,
+        defaultColDef={'flex': 1},
         dashGridOptions={"pagination": True, "paginationPageSize": 12, 'domLayout': 'autoHeight'},
         style={'height': 'auto'} #Removes the arbitrary 400px height
     )
@@ -140,7 +141,7 @@ def update_page(input_product, input_store):
 )
 def toggle_modal(_):
 
-    if not utils.is_data_loading():
+    if utils.is_data_loading():
         return dmc.Notification(
             message=f'Still updating for {utils.now().strftime("%m-%d-%Y")}.',
             id='snackbar',
@@ -148,8 +149,6 @@ def toggle_modal(_):
             icon=[html.I(className='fas fa-exclamation fa-fw fa-lg')],
             action="show"
         )
-    
-    return None
 
 
 @callback(

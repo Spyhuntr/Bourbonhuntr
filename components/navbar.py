@@ -83,7 +83,7 @@ head = dmc.Header(
                             href='/distro'
                         )
                     ])
-                    ], style={'cursor': 'pointer'}),
+                    ], styles={'cursor': 'pointer'}),
                     dmc.Image(src='/assets/TheBourbonHuntr_Logo_v1.png', width=200)
                 ], spacing='xs')
             ], span=9),
@@ -102,8 +102,7 @@ head = dmc.Header(
     prevent_initial_call=True
 )
 def download_products(_):
-    print('here')
-    df_products = pd.read_sql(models.product_list_q.statement, models.session.bind)
+    df_products = pd.read_sql(models.get_product_list_query(), models.session.bind)
     models.session.close()
 
     return dcc.send_data_frame(df_products.to_csv, "products.csv")
